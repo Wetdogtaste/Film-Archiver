@@ -19,6 +19,30 @@ from config.settings import (
 )
 
 class FilmArchiverWindow:
+    def validate_combobox_input(self, event):
+        """Validate and auto-capitalize combobox input"""
+        # Get the combobox that triggered the event
+        combobox = event.widget
+        current_text = combobox.get()
+        
+        if current_text:
+            # Auto-capitalize
+            capitalized_text = current_text.upper()
+            if capitalized_text != current_text:
+                combobox.set(capitalized_text)
+            
+            # Check for illegal characters
+            illegal_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
+            is_valid = not any(char in capitalized_text for char in illegal_chars)
+            
+            # Visual feedback
+            if not is_valid:
+                # Set text color to red for invalid input
+                combobox.configure(foreground="red")
+            else:
+                # Reset to default color
+                combobox.configure(foreground="")  # Default color
+
     def __init__(self, root):
         self.root = root
         self.root.title(APP_NAME)
@@ -84,8 +108,8 @@ class FilmArchiverWindow:
         self.camera_model = ttk.Combobox(camera_frame, width=30)
         self.camera_model.pack(side='left', padx=5)
         self.camera_model['values'] = self.pref_manager.get_cameras()
-        self.camera_model.bind('<<ComboboxSelected>>', lambda e: self.update_file_list())
-        self.camera_model.bind('<KeyRelease>', lambda e: self.update_file_list())
+        self.camera_model.bind('<<ComboboxSelected>>', lambda e: (self.validate_combobox_input(e), self.update_file_list()))
+        self.camera_model.bind('<KeyRelease>', lambda e: (self.validate_combobox_input(e), self.update_file_list()))
         
         camera_buttons = ttk.Frame(camera_frame)
         camera_buttons.pack(side='left')
@@ -108,8 +132,8 @@ class FilmArchiverWindow:
         self.film_type = ttk.Combobox(film_frame, width=30)
         self.film_type.pack(side='left', padx=5)
         self.film_type['values'] = self.pref_manager.get_films()
-        self.film_type.bind('<<ComboboxSelected>>', lambda e: self.update_file_list())
-        self.film_type.bind('<KeyRelease>', lambda e: self.update_file_list())
+        self.film_type.bind('<<ComboboxSelected>>', lambda e: (self.validate_combobox_input(e), self.update_file_list()))
+        self.film_type.bind('<KeyRelease>', lambda e: (self.validate_combobox_input(e), self.update_file_list()))
         
         film_buttons = ttk.Frame(film_frame)
         film_buttons.pack(side='left')
