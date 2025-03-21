@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="#34495e"/>
+  
+  <!-- Film strip -->
+  <g fill="#ecf0f1">
+    <!-- Main strip -->
+    <rect x="96" y="96" width="320" height="320" rx="20"/>
+    
+    <!-- Sprocket holes -->
+    <circle cx="146" cy="146" r="20"/>
+    <circle cx="146" cy="256" r="20"/>
+    <circle cx="146" cy="366" r="20"/>
+    <circle cx="366" cy="146" r="20"/>
+    <circle cx="366" cy="256" r="20"/>
+    <circle cx="366" cy="366" r="20"/>
+  </g>
+  
+  <!-- Folder symbol -->
+  <path d="M176 176h160v160H176z" fill="#3498db"/>
+</svg>
