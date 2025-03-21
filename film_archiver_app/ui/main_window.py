@@ -46,7 +46,7 @@ class FilmArchiverWindow:
     def __init__(self, root):
         self.root = root
         self.root.title(APP_NAME)
-        self.root.minsize(800, 400)
+        self.root.minsize(850, 500)
         self.root.geometry("1200x800")
         
         # Initialize managers
@@ -233,31 +233,40 @@ class FilmArchiverWindow:
         # Progress bar container
         progress_frame = ttk.Frame(self.main_container)
         progress_frame.pack(fill='x', padx=10, pady=(0, 5))
-        
+    
         # Progress bar (hidden by default)
         self.progress_var = tk.DoubleVar()
         self.progress_bar = ttk.Progressbar(progress_frame, 
                                           mode='determinate',
                                           variable=self.progress_var)
-        
+    
         # Button container
         control_frame = ttk.Frame(self.main_container)
         control_frame.pack(fill="x", padx=10, pady=10)
-        
+    
+        # Left button group container
+        left_buttons = ttk.Frame(control_frame)
+        left_buttons.pack(side="left")
+    
+        # Right button group container
+        right_buttons = ttk.Frame(control_frame)
+        right_buttons.pack(side="right")
+    
         # Add Files button
-        self.add_button = ttk.Button(control_frame, text="Add Files",
+        self.add_button = ttk.Button(left_buttons, text="Add Files",
                                    command=self.add_files)
         self.add_button.pack(side="left", padx=5)
-        
+    
         # Clear button
-        self.clear_button = ttk.Button(control_frame, text="Clear All",
+        self.clear_button = ttk.Button(left_buttons, text="Clear All",
                                      command=self.clear_files)
         self.clear_button.pack(side="left", padx=5)
-        
+    
         # Process button
-        self.process_button = ttk.Button(control_frame, text="Process Files",
+        self.process_button = ttk.Button(right_buttons, text="Process Files",
                                        command=self.process_files)
         self.process_button.pack(side="right", padx=5)
+
     def create_tooltip(self, widget, text):
         """Create a tooltip for a widget"""
         tooltip = None
