@@ -3,8 +3,8 @@
 # utility procs formerly in init.tcl which can be loaded on demand
 # for package management.
 #
-# Copyright (c) 1991-1993 The Regents of the University of California.
-# Copyright (c) 1994-1998 Sun Microsystems, Inc.
+# Copyright © 1991-1993 The Regents of the University of California.
+# Copyright © 1994-1998 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -31,16 +31,16 @@ proc tcl::Pkg::CompareExtension {fileName {ext {}}} {
     global tcl_platform
     if {$ext eq ""} {set ext [info sharedlibextension]}
     if {$tcl_platform(platform) eq "windows"} {
-        return [string equal -nocase [file extension $fileName] $ext]
+	return [string equal -nocase [file extension $fileName] $ext]
     } else {
-        # Some unices add trailing numbers after the .so, so
-        # we could have something like '.so.1.2'.
-        set root $fileName
-        while {1} {
-            set currExt [file extension $root]
-            if {$currExt eq $ext} {
-                return 1
-            }
+	# Some unices add trailing numbers after the .so, so
+	# we could have something like '.so.1.2'.
+	set root $fileName
+	while {1} {
+	    set currExt [file extension $root]
+	    if {$currExt eq $ext} {
+		return 1
+	    }
 
 	    # The current extension does not match; if it is not a numeric
 	    # value, quit, as we are only looking to ignore version number
@@ -51,7 +51,7 @@ proc tcl::Pkg::CompareExtension {fileName {ext {}}} {
 	    if {![string is integer -strict [string range $currExt 1 end]]} {
 		return 0
 	    }
-            set root [file rootname $root]
+	    set root [file rootname $root]
 	}
     }
 }
@@ -136,6 +136,9 @@ proc pkg_mkIndex {args} {
 		{*}$patternList]
     } on error {msg opt} {
 	return -options $opt $msg
+    }
+    if {[llength $fileList] == 0} {
+	return -code error "no files matched glob pattern \"$patternList\""
     }
     foreach file $fileList {
 	# For each file, figure out what commands and packages it provides.
@@ -409,6 +412,7 @@ proc pkg_mkIndex {args} {
     }
 
     set f [open [file join $dir pkgIndex.tcl] w]
+    fconfigure $f -encoding utf-8 -translation lf
     puts $f $index
     close $f
 }
@@ -491,11 +495,15 @@ proc tclPkgUnknown {name args} {
 		set dir [file dirname $file]
 		if {![info exists procdDirs($dir)]} {
 		    try {
-			source $file
+			::tcl::Pkg::source $file
 		    } trap {POSIX EACCES} {} {
 			# $file was not readable; silently ignore
 			continue
 		    } on error msg {
+			if {[regexp {version conflict for package} $msg]} {
+			    # In case of version conflict, silently ignore
+			    continue
+			}
 			tclLog "error reading package index file $file: $msg"
 		    } on ok {} {
 			set procdDirs($dir) 1
@@ -509,11 +517,15 @@ proc tclPkgUnknown {name args} {
 	    # safe interps usually don't have "file exists",
 	    if {([interp issafe] || [file exists $file])} {
 		try {
-		    source $file
+		    ::tcl::Pkg::source $file
 		} trap {POSIX EACCES} {} {
 		    # $file was not readable; silently ignore
 		    continue
 		} on error msg {
+		    if {[regexp {version conflict for package} $msg]} {
+			# In case of version conflict, silently ignore
+			continue
+		    }
 		    tclLog "error reading package index file $file: $msg"
 		} on ok {} {
 		    set procdDirs($dir) 1
@@ -594,11 +606,15 @@ proc tcl::MacOSXPkgUnknown {original name args} {
 	    set dir [file dirname $file]
 	    if {![info exists procdDirs($dir)]} {
 		try {
-		    source $file
+		    ::tcl::Pkg::source $file
 		} trap {POSIX EACCES} {} {
 		    # $file was not readable; silently ignore
 		    continue
 		} on error msg {
+		    if {[regexp {version conflict for package} $msg]} {
+			# In case of version conflict, silently ignore
+			continue
+		    }
 		    tclLog "error reading package index file $file: $msg"
 		} on ok {} {
 		    set procdDirs($dir) 1

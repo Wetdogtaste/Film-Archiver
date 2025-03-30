@@ -10,6 +10,7 @@ from PIL import Image, ImageTk
 from tkcalendar import Calendar
 import shutil
 import piexif
+import sys
 
 from core.file_manager import FileManager
 from core.preferences import PreferenceManager
@@ -57,6 +58,14 @@ class FilmArchiverWindow:
         self.files = []
         self.thumbnail_cache = {}
         self.colors = LIGHT_THEME if not IS_MACOS else DARK_THEME
+        self.file_lenses = {}  # Dictionary to store lens for each file
+        self.active_combo = None  # Track active combobox
+        self.dropdown_active = False  # Flag to prevent immediate reopening
+        self.last_dropdown_time = 0  # Track when dropdown was last closed
+        
+        # Configure styles
+        style = ttk.Style()
+        style.configure("Dropdown.TFrame", relief="solid", borderwidth=1)
         
         # Create UI
         self.create_main_layout()
@@ -149,6 +158,98 @@ class FilmArchiverWindow:
         self.create_tooltip(self.film_add, "Add to favorites")
         self.create_tooltip(self.film_remove, "Remove from favorites")
         
+        # Push/Pull buttons
+        push_pull_frame = ttk.Frame(film_frame)
+        push_pull_frame.pack(side='left', padx=(5, 0))
+
+        # Label for Push/Pull
+        ttk.Label(push_pull_frame, text="Push/Pull:").pack(side='left')
+
+        # Push/Pull value variable
+        self.push_pull_value = tk.IntVar(value=0)
+                
+        # Display frame for the value
+        display_frame = ttk.Frame(push_pull_frame)
+        display_frame.pack(side='left', padx=2)
+                
+        # Label to display the current value
+        self.push_pull_display = ttk.Label(display_frame, text="0", width=2)
+        self.push_pull_display.pack(padx=2)
+                
+        # Buttons frame
+        buttons_frame = ttk.Frame(push_pull_frame)
+        buttons_frame.pack(side='left')
+                
+        # Minus button
+        self.push_pull_minus = ttk.Button(buttons_frame, text="-", width=2,
+                                       command=self.decrease_push_pull)
+        self.push_pull_minus.pack(side='left', padx=1)
+                
+        # Plus button
+        self.push_pull_plus = ttk.Button(buttons_frame, text="+", width=2,
+                                      command=self.increase_push_pull)
+        self.push_pull_plus.pack(side='left', padx=1)
+                
+        self.create_tooltip(self.push_pull_display, 
+            "0: Normal development\n"
+            "+1, +2, etc: Push process\n"
+            "-1, -2, etc: Pull process")
+            
+        # Shot at ISO field
+        shot_iso_frame = ttk.Frame(film_frame)
+        shot_iso_frame.pack(side='left', padx=(10, 0))
+        
+        ttk.Label(shot_iso_frame, text="Shot at ISO:").pack(side='left')
+        
+        # Variable to store the shot ISO value
+        self.shot_iso_var = tk.StringVar()
+        self.shot_iso_var.trace_add("write", self.on_shot_iso_changed)
+        
+        # Entry field for shot ISO
+        self.shot_iso_entry = ttk.Entry(shot_iso_frame, width=6, textvariable=self.shot_iso_var)
+        self.shot_iso_entry.pack(side='left', padx=2)
+        
+        # Validate to ensure only numbers are entered
+        vcmd = (self.root.register(self.validate_iso_input), '%P')
+        self.shot_iso_entry.configure(validate="key", validatecommand=vcmd)
+        
+        self.create_tooltip(self.shot_iso_entry, 
+            "Enter the ISO you shot this film at\n"
+            "Example: For Portra 400 shot at 800, enter 800\n"
+            "This will add (@800) to the filename\n"
+            "Note: This disables Push/Pull when used")
+            
+        # Lens Model
+        lens_frame = ttk.Frame(input_frame)
+        lens_frame.pack(fill='x', pady=5)
+        ttk.Label(lens_frame, text="Lens Model:", width=12).pack(side='left')
+        self.lens_model = ttk.Combobox(lens_frame, width=30)
+        self.lens_model.pack(side='left', padx=5)
+        self.lens_model['values'] = self.pref_manager.get_lenses()
+        self.lens_model.bind('<<ComboboxSelected>>', lambda e: (self.validate_combobox_input(e), self.update_file_list()))
+        self.lens_model.bind('<KeyRelease>', lambda e: (self.validate_combobox_input(e), self.update_file_list()))
+        
+        lens_buttons = ttk.Frame(lens_frame)
+        lens_buttons.pack(side='left')
+        
+        self.lens_add = ttk.Button(lens_buttons, text="+", width=3,
+                                 command=self.add_lens_to_list)
+        self.lens_add.pack(side='left', padx=2)
+        
+        self.lens_remove = ttk.Button(lens_buttons, text="-", width=3,
+                                    command=self.remove_lens_from_list)
+        self.lens_remove.pack(side='left', padx=2)
+        
+        # Apply to All button
+        self.lens_apply_all = ttk.Button(lens_buttons, text="Apply to All",
+                                      command=self.apply_lens_to_all)
+        self.lens_apply_all.pack(side='left', padx=5)
+        
+        self.create_tooltip(self.lens_add, "Add to favorites")
+        self.create_tooltip(self.lens_remove, "Remove from favorites")
+        self.create_tooltip(self.lens_apply_all, "Apply this lens to all files")
+        self.create_tooltip(self.lens_model, "Lens used for this roll (stored in EXIF metadata)")
+        
         # Date
         date_frame = ttk.Frame(input_frame)
         date_frame.pack(fill='x', pady=5)
@@ -196,21 +297,27 @@ class FilmArchiverWindow:
         
         # Create treeview with all columns
         self.file_list = ttk.Treeview(list_frame,
-                                    columns=("Filename", "Original Date", "New Name", "New Date"),
+                                    columns=("Filename", "Original Date", "New Name", "New Date", "Lens"),
                                     show="headings",
-                                    selectmode="browse")
+                                    selectmode="extended")  # Allow multiple selections
         
         # Configure columns
         self.file_list.heading("Filename", text="Original Filename")
         self.file_list.heading("Original Date", text="Original Date")
         self.file_list.heading("New Name", text="New Filename")
         self.file_list.heading("New Date", text="New Date")
+        self.file_list.heading("Lens", text="Lens")
+        
+        # Configure lens column style
+        style = ttk.Style()
+        style.configure("Lens.TLabel", background="#f8f8f8")
         
         # Set column widths
         self.file_list.column("Filename", width=200)
         self.file_list.column("Original Date", width=100)
         self.file_list.column("New Name", width=250)
         self.file_list.column("New Date", width=100)
+        self.file_list.column("Lens", width=150)
         
         # Add scrollbars
         y_scroll = ttk.Scrollbar(list_frame, orient="vertical",
@@ -227,6 +334,10 @@ class FilmArchiverWindow:
         
         # Bind selection event
         self.file_list.bind('<<TreeviewSelect>>', self.on_file_select)
+        
+        # Bind click events for lens column dropdown
+        self.file_list.bind('<ButtonPress-1>', self.on_file_list_press)
+        self.file_list.bind('<ButtonRelease-1>', self.on_file_list_click)
         
     def create_control_frame(self):
         """Create the control buttons section"""
@@ -322,6 +433,84 @@ class FilmArchiverWindow:
         if film:
             self.pref_manager.remove_film(film)
             self.film_type['values'] = self.pref_manager.get_films()
+            
+    def add_lens_to_list(self):
+        """Add current lens to saved list"""
+        lens = self.lens_model.get().strip().upper()
+        if lens:
+            self.pref_manager.add_lens(lens)
+            self.lens_model['values'] = self.pref_manager.get_lenses()
+
+    def remove_lens_from_list(self):
+        """Remove current lens from saved list"""
+        lens = self.lens_model.get().strip().upper()
+        if lens:
+            self.pref_manager.remove_lens(lens)
+            self.lens_model['values'] = self.pref_manager.get_lenses()
+            
+    def apply_lens_to_all(self):
+        """Apply the current global lens to all files"""
+        lens = self.lens_model.get().strip().upper()
+        if lens and self.files:
+            # Clear all per-file lens settings
+            self.file_lenses.clear()
+            
+            # Update the file list to reflect changes
+            self.update_file_list()
+            
+    def validate_iso_input(self, value):
+        """Validate ISO input to ensure only numbers are entered"""
+        if value == "":
+            return True
+        return value.isdigit()
+        
+    def on_shot_iso_changed(self, *args):
+        """Handle changes to the Shot at ISO field"""
+        shot_iso = self.shot_iso_var.get().strip()
+        
+        # If Shot at ISO has a value, disable Push/Pull
+        if shot_iso:
+            self.push_pull_minus.configure(state="disabled")
+            self.push_pull_plus.configure(state="disabled")
+            # Reset Push/Pull value to 0
+            if self.push_pull_value.get() != 0:
+                self.push_pull_value.set(0)
+                self.push_pull_display.config(text="0")
+        else:
+            # Enable Push/Pull buttons
+            self.push_pull_minus.configure(state="normal")
+            self.push_pull_plus.configure(state="normal")
+            
+        # Update file list to reflect changes
+        self.update_file_list()
+        
+    def increase_push_pull(self):
+        """Increase the push/pull value"""
+        current = self.push_pull_value.get()
+        # Limit to maximum +5
+        if current < 5:
+            self.push_pull_value.set(current + 1)
+            self.push_pull_display.config(text=str(current + 1))
+            
+            # Clear Shot at ISO field
+            if self.shot_iso_var.get():
+                self.shot_iso_var.set("")
+                
+            self.update_file_list()
+
+    def decrease_push_pull(self):
+        """Decrease the push/pull value"""
+        current = self.push_pull_value.get()
+        # Limit to minimum -5
+        if current > -5:
+            self.push_pull_value.set(current - 1)
+            self.push_pull_display.config(text=str(current - 1))
+            
+            # Clear Shot at ISO field
+            if self.shot_iso_var.get():
+                self.shot_iso_var.set("")
+                
+            self.update_file_list()
 
     def add_files(self):
         """Handle adding new files"""
@@ -350,15 +539,32 @@ class FilmArchiverWindow:
         if self.reverse_var.get():
             files_to_show.reverse()
             
+        # Get global lens value
+        global_lens = self.lens_model.get().strip().upper()
+            
         for file in files_to_show:
             filename = os.path.basename(file)
             original_date = self.file_manager.get_image_date(file)
+            
+            # Get lens for this file (or use global lens if not set)
+            lens = self.file_lenses.get(file, global_lens)
+            
+            # Add dropdown indicator to lens value
+            lens_display = f"{lens} ▼"
+            
             new_name = self.generate_new_filename(file)
             new_date = self.date_entry.get()
             
-            self.file_list.insert("", "end", values=(
-                filename, original_date, new_name, new_date
+            # Insert item with lens as the last column
+            item_id = self.file_list.insert("", "end", values=(
+                filename, original_date, new_name, new_date, lens_display
             ))
+            
+            # Style the lens cell to indicate it's clickable with a border
+            self.file_list.tag_configure("lens_cell", background="#e8e8e8", foreground="#000000")
+            
+            # Apply the tag to the item
+            self.file_list.item(item_id, tags=("lens_cell",))
             
     def generate_new_filename(self, filepath):
         """Generate new filename based on current settings"""
@@ -366,6 +572,8 @@ class FilmArchiverWindow:
             roll_num = int(self.roll_number.get())
             camera = self.camera_model.get().strip().upper()
             film = self.film_type.get().strip().upper()
+            push_pull = self.push_pull_value.get()
+            shot_iso = self.shot_iso_var.get().strip()
             
             if all([roll_num, camera, film]):
                 idx = self.files.index(filepath) + 1
@@ -373,7 +581,18 @@ class FilmArchiverWindow:
                     idx = len(self.files) - idx + 1
                     
                 ext = os.path.splitext(filepath)[1]
-                return f"{roll_num:03d}-{idx:02d}-{camera}-{film}{ext}"
+                
+                # Create suffix based on Shot at ISO or Push/Pull
+                suffix = ""
+                if shot_iso:
+                    # Use Shot at ISO value
+                    suffix = f"(@{shot_iso})"
+                elif push_pull != 0:
+                    # Use Push/Pull value
+                    sign = "+" if push_pull > 0 else ""
+                    suffix = f"({sign}{push_pull})"
+                
+                return f"{roll_num:03d}-{idx:02d}-{camera}-{film}{suffix}{ext}"
                 
         except (ValueError, IndexError):
             pass
@@ -463,10 +682,231 @@ class FilmArchiverWindow:
         top.lift()
         top.focus_force()
         
+    def on_file_list_press(self, event):
+        """Handle mouse press on the file list to intercept lens column clicks"""
+        # Check if dropdown was recently closed
+        current_time = datetime.now().timestamp()
+        if self.dropdown_active or (current_time - self.last_dropdown_time < 0.3):
+            # Prevent immediate reopening
+            return "break"  # Stop event propagation
+            
+        # Get the item and column that was clicked
+        region = self.file_list.identify_region(event.x, event.y)
+        if region != "cell":
+            return
+            
+        item_id = self.file_list.identify_row(event.y)
+        column = self.file_list.identify_column(event.x)
+        
+        # Only intercept lens column clicks
+        if column == "#5" and item_id:  # Lens column
+            # Store current selection to use later
+            self.current_selection = self.file_list.selection()
+            # Return "break" to prevent the default selection behavior
+            return "break"
+    
+    def on_file_list_click(self, event):
+        """Handle clicks on the file list"""
+        # Check if dropdown was recently closed
+        current_time = datetime.now().timestamp()
+        if self.dropdown_active or (current_time - self.last_dropdown_time < 0.3):
+            # Prevent immediate reopening
+            return
+            
+        # Get the item and column that was clicked
+        region = self.file_list.identify_region(event.x, event.y)
+        if region != "cell":
+            return
+            
+        item_id = self.file_list.identify_row(event.y)
+        column = self.file_list.identify_column(event.x)
+        
+        # Only handle lens column clicks
+        if column == "#5" and item_id:  # Lens column
+            # Store current selection before doing anything
+            current_selection = self.file_list.selection()
+            
+            # Get the file path for this item
+            item_values = self.file_list.item(item_id, 'values')
+            if not item_values:
+                return
+                
+            filename = item_values[0]
+            file_path = None
+            for file in self.files:
+                if os.path.basename(file) == filename:
+                    file_path = file
+                    break
+                    
+            if not file_path:
+                return
+                
+            # For lens column clicks, we don't modify the selection at all
+            # If the clicked item is not in the current selection, we'll still use it
+            # as the target file for the lens dropdown, but won't change the selection
+            
+            # Restore the original selection to prevent any changes
+            # This is crucial for cmd+click which might deselect items
+            if current_selection:
+                self.file_list.selection_set(current_selection)
+            
+            # Get file paths for all selected items
+            selected_files = []
+            for sel_item in current_selection:
+                sel_values = self.file_list.item(sel_item, 'values')
+                if sel_values:
+                    sel_filename = sel_values[0]
+                    for file in self.files:
+                        if os.path.basename(file) == sel_filename:
+                            selected_files.append(file)
+                            break
+            
+            # If no files are selected, just use the clicked file
+            if not selected_files:
+                selected_files = [file_path]
+            
+            # Show inline dropdown for lens selection
+            self.show_lens_dropdown(item_id, column, file_path, selected_files)
+            
+    def show_lens_dropdown(self, item_id, column, file_path, selected_files=None):
+        """Show custom dropdown menu for lens selection"""
+        # Store the current selection to restore it later
+        current_selection = self.file_list.selection()
+        
+        # If there's already an active dropdown, destroy it
+        if hasattr(self, 'active_dropdown') and self.active_dropdown and self.active_dropdown.winfo_exists():
+            self.active_dropdown.destroy()
+            self.active_dropdown = None
+        
+        # Get cell coordinates
+        x, y, width, height = self.file_list.bbox(item_id, column)
+        
+        # Get current lens value (from per-file setting or global)
+        current_lens = self.file_lenses.get(file_path, self.lens_model.get().strip().upper())
+        
+        # Get all lens values
+        lens_values = self.pref_manager.get_lenses()
+        
+        # Create a custom dropdown menu
+        dropdown = tk.Toplevel(self.root)
+        dropdown.overrideredirect(True)  # Remove window decorations
+        
+        # Position the dropdown below the cell
+        dropdown_x = self.file_list.winfo_rootx() + x
+        dropdown_y = self.file_list.winfo_rooty() + y + height
+        dropdown.geometry(f"{width}x{min(200, len(lens_values) * 25)}+{dropdown_x}+{dropdown_y}")
+        
+        # Restore the selection after creating the dropdown
+        # This is crucial as the dropdown creation might affect the selection
+        if current_selection:
+            self.file_list.selection_set(current_selection)
+        
+        # Create a frame with a border
+        frame = ttk.Frame(dropdown, style="Dropdown.TFrame")
+        frame.pack(fill="both", expand=True)
+        
+        # Create a canvas with scrollbar for the dropdown items
+        canvas = tk.Canvas(frame, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
+        
+        # Configure the canvas
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+        
+        # Create a frame inside the canvas to hold the items
+        items_frame = ttk.Frame(canvas)
+        canvas.create_window((0, 0), window=items_frame, anchor="nw")
+        
+        # Set dropdown active flag
+        self.dropdown_active = True
+        
+        # Function to handle item selection
+        def on_select(lens, event=None):
+            # If we have multiple files selected
+            if selected_files and len(selected_files) > 0:
+                # Apply the lens to all selected files
+                for sel_file in selected_files:
+                    self.file_lenses[sel_file] = lens
+            else:
+                # Just apply to the current file
+                self.file_lenses[file_path] = lens
+                
+            # Add to favorites if not already there
+            self.pref_manager.add_lens(lens)
+            self.lens_model['values'] = self.pref_manager.get_lenses()
+            
+            # Update the file list
+            self.update_file_list()
+                
+            # Clean up
+            dropdown.destroy()
+            self.active_dropdown = None
+            
+            # Set timestamp to prevent immediate reopening
+            self.last_dropdown_time = datetime.now().timestamp()
+            self.dropdown_active = False
+            
+            # Stop event propagation
+            if event:
+                return "break"
+        
+        # Add items to the dropdown
+        for lens in lens_values:
+            item_frame = ttk.Frame(items_frame)
+            item_frame.pack(fill="x")
+            
+            # Create a label for each item
+            label = ttk.Label(item_frame, text=lens, padding=(5, 2))
+            label.pack(fill="x")
+            
+            # Highlight the current selection
+            if lens == current_lens:
+                label.configure(background="#e0e0e0")
+            
+            # Bind events
+            label.bind("<Button-1>", lambda e, l=lens: on_select(l))
+            
+            # Add hover effect
+            def on_enter(e, lbl=label):
+                lbl.configure(background="#e0e0e0")
+            
+            def on_leave(e, lbl=label, selected=(lens == current_lens)):
+                if not selected:
+                    lbl.configure(background="")
+            
+            label.bind("<Enter>", on_enter)
+            label.bind("<Leave>", on_leave)
+        
+        # Update the canvas scroll region
+        items_frame.update_idletasks()
+        canvas.configure(scrollregion=canvas.bbox("all"))
+        
+        # Store reference to active dropdown
+        self.active_dropdown = dropdown
+        
+        # Handle click outside
+        def on_click_outside(event):
+            if event.widget != dropdown and not event.widget.winfo_toplevel() == dropdown:
+                dropdown.destroy()
+                self.active_dropdown = None
+                self.root.unbind("<Button-1>", on_click_outside_id)
+                
+                # Set timestamp to prevent immediate reopening
+                self.last_dropdown_time = datetime.now().timestamp()
+                self.dropdown_active = False
+        
+        on_click_outside_id = self.root.bind("<Button-1>", on_click_outside, add="+")
+        
+        # Ensure dropdown is on top
+        dropdown.lift()
+        dropdown.focus_set()
+    
     def clear_files(self):
         """Clear all files"""
         self.files = []
         self.thumbnail_cache.clear()
+        self.file_lenses.clear()  # Clear lens data
         self.update_file_list()
         self.update_preview(None)
 
@@ -501,8 +941,21 @@ class FilmArchiverWindow:
             if not output_dir:  # User cancelled
                 return
             
+            # Create suffix based on Shot at ISO or Push/Pull
+            suffix = ""
+            shot_iso = self.shot_iso_var.get().strip()
+            push_pull = self.push_pull_value.get()
+            
+            if shot_iso:
+                # Use Shot at ISO value
+                suffix = f"(@{shot_iso})"
+            elif push_pull != 0:
+                # Use Push/Pull value
+                sign = "+" if push_pull > 0 else ""
+                suffix = f"({sign}{push_pull})"
+            
             # Create new folder name
-            new_folder = f"{roll_num:03d}-{camera}-{film}-{selected_date.strftime('%b%y').upper()}"
+            new_folder = f"{roll_num:03d}-{camera}-{film}{suffix}-{selected_date.strftime('%b%y').upper()}"
             output_path = os.path.join(output_dir, new_folder)
             
             # Create output directory
@@ -535,7 +988,21 @@ class FilmArchiverWindow:
                     
                     # Generate new filename
                     ext = os.path.splitext(file)[1]
-                    new_name = f"{roll_num:03d}-{idx:02d}-{camera}-{film}{ext}"
+                    
+                    # Create suffix based on Shot at ISO or Push/Pull
+                    suffix = ""
+                    shot_iso = self.shot_iso_var.get().strip()
+                    push_pull = self.push_pull_value.get()
+                    
+                    if shot_iso:
+                        # Use Shot at ISO value
+                        suffix = f"(@{shot_iso})"
+                    elif push_pull != 0:
+                        # Use Push/Pull value
+                        sign = "+" if push_pull > 0 else ""
+                        suffix = f"({sign}{push_pull})"
+                    
+                    new_name = f"{roll_num:03d}-{idx:02d}-{camera}-{film}{suffix}{ext}"
                     new_path = os.path.join(output_path, new_name)
                     
                     # Copy file and update date
@@ -545,19 +1012,54 @@ class FilmArchiverWindow:
                     try:
                         date_str = selected_date.strftime("%Y:%m:%d %H:%M:%S")
                         
-                        # Update EXIF date
+                        # Update EXIF date and lens
                         try:
                             exif_dict = piexif.load(new_path)
                             exif_dict['0th'][piexif.ImageIFD.DateTime] = date_str.encode()
                             exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = date_str.encode()
                             exif_dict['Exif'][piexif.ExifIFD.DateTimeDigitized] = date_str.encode()
+                            
+                            # Add lens information if available
+                            lens = self.file_lenses.get(file, self.lens_model.get().strip().upper())
+                            if lens:
+                                # Set lens model in EXIF
+                                exif_dict['Exif'][piexif.ExifIFD.LensModel] = lens.encode()
+                                
                             exif_bytes = piexif.dump(exif_dict)
                             piexif.insert(exif_bytes, new_path)
-                        except:
-                            pass
+                        except Exception as exif_error:
+                            logging.warning(f"Error updating EXIF: {exif_error}")
                             
                         # Update file modification time
                         os.utime(new_path, (selected_date.timestamp(), selected_date.timestamp()))
+                        
+                        # Update macOS creation date if on macOS
+                        if IS_MACOS:
+                            try:
+                                from Foundation import (
+                                    NSFileManager,
+                                    NSDate,
+                                    NSFileCreationDate,
+                                    NSNumber
+                                )
+                                
+                                # Convert Python datetime to NSDate
+                                timestamp = selected_date.timestamp()
+                                ns_date = NSDate.dateWithTimeIntervalSince1970_(timestamp)
+                                
+                                # Create attributes dictionary with creation date
+                                attrs = {NSFileCreationDate: ns_date}
+                                
+                                # Set file attributes
+                                file_manager = NSFileManager.defaultManager()
+                                result, error = file_manager.setAttributes_ofItemAtPath_error_(
+                                    attrs, new_path, None
+                                )
+                                
+                                if not result and error:
+                                    logging.warning(f"Failed to set macOS creation date: {error}")
+                            except Exception as e:
+                                logging.warning(f"Error setting macOS creation date: {e}")
                     except:
                         pass
                         

@@ -3,19 +3,22 @@ Film Archiver - File Management Module
 """
 import os
 import logging
-from tkinter import ttk, messagebox, filedialog
+from tkinter import filedialog
 from typing import List, Optional
 from PIL import Image
 from datetime import datetime
 from config.settings import SUPPORTED_FORMATS, IS_MACOS
 
-Image.MAX_IMAGE_PIXELS = None  # Allows for very large images
+# Allow for very large images, but with a warning about potential security implications
+# This disables PIL's protection against decompression bombs (maliciously crafted images)
+Image.MAX_IMAGE_PIXELS = None
 
 logger = logging.getLogger(__name__)
 
 class FileManager:
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
+        # Use the module-level logger
+        self.logger = logger
 
     def select_files(self) -> List[str]:
         """
@@ -83,7 +86,8 @@ class FileManager:
                 with Image.open(file_path) as img:
                     img.verify()
                 return True
-            except:
+            except Exception as img_error:
+                self.logger.debug(f"Image verification failed: {img_error}")
                 return False
 
         except Exception as e:
@@ -106,48 +110,36 @@ class FileManager:
             self.logger.error(f"Error creating thumbnail for {image_path}: {e}")
             return None
 
+    def _extract_exif_date(self, img: Image.Image) -> Optional[str]:
+        """Extract date from EXIF data if available"""
+        if not hasattr(img, '_getexif') or not img._getexif():
+            return None
+            
+        exif = img._getexif()
+        # Try different EXIF date fields
+        date_fields = [36867, 36868, 306]  # DateTimeOriginal, DateTimeDigitized, DateTime
+        for field in date_fields:
+            if field in exif:
+                try:
+                    date_str = exif[field]
+                    dt = datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
+                    return dt.strftime("%m/%d/%Y")
+                except ValueError:
+                    continue
+        return None
+
     def get_image_date(self, image_path: str) -> str:
         """Get the image date from EXIF or file system"""
         try:
-            # Get file extension
-            ext = os.path.splitext(image_path)[1].lower()
-            
-            # For RAW files and special formats
-            if ext in ['.cr2', '.cr3', '.crw', '.nef', '.arw', '.raw', '.raf', '.dng']:
-                try:
-                    with Image.open(image_path) as img:
-                        if hasattr(img, '_getexif') and img._getexif():
-                            exif = img._getexif()
-                            # Try different EXIF date fields
-                            date_fields = [36867, 36868, 306]  # DateTimeOriginal, DateTimeDigitized, DateTime
-                            for field in date_fields:
-                                if field in exif:
-                                    try:
-                                        date_str = exif[field]
-                                        dt = datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
-                                        return dt.strftime("%m/%d/%Y")
-                                    except ValueError:
-                                        continue
-                except Exception as raw_error:
-                    self.logger.debug(f"Error reading RAW format: {raw_error}")
-                    pass
-
-            # For standard formats
-            else:
+            # Try to extract EXIF date from image
+            try:
                 with Image.open(image_path) as img:
-                    if hasattr(img, '_getexif') and img._getexif():
-                        exif = img._getexif()
-                        # Try different EXIF date fields
-                        date_fields = [36867, 36868, 306]  # DateTimeOriginal, DateTimeDigitized, DateTime
-                        for field in date_fields:
-                            if field in exif:
-                                try:
-                                    date_str = exif[field]
-                                    dt = datetime.strptime(date_str, "%Y:%m:%d %H:%M:%S")
-                                    return dt.strftime("%m/%d/%Y")
-                                except ValueError:
-                                    continue
-
+                    date = self._extract_exif_date(img)
+                    if date:
+                        return date
+            except Exception as img_error:
+                self.logger.debug(f"Error reading image EXIF: {img_error}")
+            
             # Fallback to file modification time
             mod_time = os.path.getmtime(image_path)
             return datetime.fromtimestamp(mod_time).strftime("%m/%d/%Y")
