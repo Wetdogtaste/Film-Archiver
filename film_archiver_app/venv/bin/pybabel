@@ -1,5 +1,5 @@
 #!/bin/sh
-'''exec' "/Users/michaelziebell/Documents/Develop Projects/GitHub/Film-Archiver/film_archiver_app/venv/bin/python3.13" "$0" "$@"
+'''exec' "/Users/michaelziebell/Documents/Develop Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/venv/bin/python3.13" "$0" "$@"
 ' '''
 # -*- coding: utf-8 -*-
 import re

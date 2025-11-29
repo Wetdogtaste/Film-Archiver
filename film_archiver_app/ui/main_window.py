@@ -57,11 +57,7 @@ class FilmArchiverWindow:
         # Initialize variables
         self.files = []
         self.thumbnail_cache = {}
-        
-        # Set theme based on platform
-        # For macOS, we'll use light theme to match the system
-        self.colors = LIGHT_THEME
-            
+        self.colors = LIGHT_THEME if not IS_MACOS else DARK_THEME
         self.file_lenses = {}  # Dictionary to store lens for each file
         self.active_combo = None  # Track active combobox
         self.dropdown_active = False  # Flag to prevent immediate reopening
@@ -69,13 +65,7 @@ class FilmArchiverWindow:
         
         # Configure styles
         style = ttk.Style()
-        # Use theme-aware styling for dropdowns and tooltips
-        style.configure("Dropdown.TFrame", relief="solid", borderwidth=1, background=self.colors['bg'])
-        style.configure("Lens.Treeview.Cell", background=self.colors['button'], foreground=self.colors['fg'])
-        style.configure("Tooltip.TLabel", background=self.colors['tooltip_bg'], foreground=self.colors['tooltip_fg'])
-        # Configure LabelFrame style
-        style.configure("TLabelframe", background=self.colors['bg'])
-        style.configure("TLabelframe.Label", background=self.colors['bg'], foreground=self.colors['fg'])
+        style.configure("Dropdown.TFrame", relief="solid", borderwidth=1)
         
         # Create UI
         self.create_main_layout()
@@ -289,8 +279,7 @@ class FilmArchiverWindow:
             
     def create_preview_frame(self, parent):
         """Create the image preview section"""
-        # Use style for the LabelFrame
-        preview_frame = ttk.LabelFrame(parent, text="Preview", padding="10", style="TLabelframe")
+        preview_frame = ttk.LabelFrame(parent, text="Preview", padding="10")
         preview_frame.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
         
         # Set minimum width for preview
@@ -298,16 +287,8 @@ class FilmArchiverWindow:
         preview_frame.grid_propagate(False)
         preview_frame.configure(width=350)
         
-        # Create a regular tk.Label instead of ttk.Label for better color control
-        # Use a Frame with white background to ensure proper display
-        preview_container = tk.Frame(preview_frame, background='white')
-        preview_container.pack(expand=True, fill='both')
-        
-        self.preview_label = tk.Label(preview_container, 
-                                    background='white',
-                                    borderwidth=0, 
-                                    highlightthickness=0)
-        self.preview_label.pack(expand=True, fill='both')
+        self.preview_label = ttk.Label(preview_frame)
+        self.preview_label.pack(expand=True)
         
     def create_file_list_frame(self, parent):
         """Create the file list section"""
@@ -327,18 +308,9 @@ class FilmArchiverWindow:
         self.file_list.heading("New Date", text="New Date")
         self.file_list.heading("Lens", text="Lens")
         
-        # Configure treeview style with theme-aware colors
+        # Configure lens column style
         style = ttk.Style()
-        style.configure("Treeview", 
-                      background=self.colors['bg'],
-                      foreground=self.colors['fg'],
-                      fieldbackground=self.colors['bg'])
-        style.configure("Treeview.Heading", 
-                      background=self.colors['button'],
-                      foreground=self.colors['fg'])
-        style.map('Treeview', 
-                background=[('selected', self.colors['select_bg'])],
-                foreground=[('selected', self.colors['select_fg'])])
+        style.configure("Lens.TLabel", background="#f8f8f8")
         
         # Set column widths
         self.file_list.column("Filename", width=200)
@@ -416,18 +388,13 @@ class FilmArchiverWindow:
             x += widget.winfo_rootx() + 25
             y += widget.winfo_rooty() + 20
             
-            # Create tooltip with current theme colors
             tooltip = tk.Toplevel(widget)
             tooltip.wm_overrideredirect(True)
             tooltip.wm_geometry(f"+{x}+{y}")
-            tooltip.configure(background=self.colors['tooltip_bg'])
             
-            # Create a regular tk.Label instead of ttk.Label for better color control
-            label = tk.Label(tooltip, text=text, 
-                           background=self.colors['tooltip_bg'],
-                           foreground=self.colors['tooltip_fg'],
-                           padx=5, pady=5,
-                           borderwidth=0, highlightthickness=0)
+            label = ttk.Label(tooltip, text=text, 
+                            style='Tooltip.TLabel',
+                            padding=5)
             label.pack()
             
         def leave(event):
@@ -593,8 +560,8 @@ class FilmArchiverWindow:
                 filename, original_date, new_name, new_date, lens_display
             ))
             
-            # Style the lens cell to indicate it's clickable with theme-aware colors
-            self.file_list.tag_configure("lens_cell", background=self.colors['button'], foreground=self.colors['fg'])
+            # Style the lens cell to indicate it's clickable with a border
+            self.file_list.tag_configure("lens_cell", background="#e8e8e8", foreground="#000000")
             
             # Apply the tag to the item
             self.file_list.item(item_id, tags=("lens_cell",))
@@ -656,15 +623,11 @@ class FilmArchiverWindow:
         """Update the preview image"""
         if not filepath:
             self.preview_label.configure(image='')
-            # Ensure background color is set even when no image is displayed
-            self.preview_label.configure(background='white')
             return
             
         # Check cache first
         if filepath in self.thumbnail_cache:
             self.preview_label.configure(image=self.thumbnail_cache[filepath])
-            # Ensure background color is set when displaying an image
-            self.preview_label.configure(background='white')
             return
             
         # Create new thumbnail
@@ -673,8 +636,6 @@ class FilmArchiverWindow:
             photo = ImageTk.PhotoImage(thumbnail)
             self.thumbnail_cache[filepath] = photo
             self.preview_label.configure(image=photo)
-            # Ensure background color is set when displaying a new image
-            self.preview_label.configure(background='white')
             
             # Limit cache size
             if len(self.thumbnail_cache) > MAX_CACHE_ENTRIES:
@@ -688,18 +649,13 @@ class FilmArchiverWindow:
         top = tk.Toplevel(self.root)
         top.title("Select Date")
         top.transient(self.root)
-        top.configure(background=self.colors['bg'])
         
-        # Create calendar with theme-aware configuration
+        # Create calendar with fixed configuration
         cal = Calendar(top, 
                       selectmode='day', 
                       date_pattern='mm/dd/y',
                       showweeknumbers=False,  # Remove the extra column
-                      firstweekday='sunday',   # Start week on Sunday
-                      background=self.colors['bg'],
-                      foreground=self.colors['fg'],
-                      selectbackground=self.colors['select_bg'],
-                      selectforeground=self.colors['select_fg']
+                      firstweekday='sunday'   # Start week on Sunday
                      )
         cal.pack(padx=10, pady=10)
         
@@ -834,52 +790,33 @@ class FilmArchiverWindow:
         # Create a custom dropdown menu
         dropdown = tk.Toplevel(self.root)
         dropdown.overrideredirect(True)  # Remove window decorations
-        dropdown.attributes('-topmost', True)  # Ensure dropdown appears on top
         
         # Position the dropdown below the cell
         dropdown_x = self.file_list.winfo_rootx() + x
         dropdown_y = self.file_list.winfo_rooty() + y + height
         dropdown.geometry(f"{width}x{min(200, len(lens_values) * 25)}+{dropdown_x}+{dropdown_y}")
         
-        # Configure dropdown background to match theme
-        dropdown.configure(background=self.colors['bg'])
-        
         # Restore the selection after creating the dropdown
         # This is crucial as the dropdown creation might affect the selection
         if current_selection:
             self.file_list.selection_set(current_selection)
         
-        # Create a simple frame without borders or padding
-        frame = tk.Frame(dropdown, background=self.colors['bg'], borderwidth=0, highlightthickness=0)
+        # Create a frame with a border
+        frame = ttk.Frame(dropdown, style="Dropdown.TFrame")
         frame.pack(fill="both", expand=True)
         
-        # Create a listbox for the dropdown items (simpler than canvas+frame)
-        listbox = tk.Listbox(frame, 
-                           background=self.colors['bg'],
-                           foreground=self.colors['fg'],
-                           selectbackground=self.colors['select_bg'],
-                           selectforeground=self.colors['select_fg'],
-                           borderwidth=0,
-                           highlightthickness=0,
-                           exportselection=False)
+        # Create a canvas with scrollbar for the dropdown items
+        canvas = tk.Canvas(frame, highlightthickness=0)
+        scrollbar = ttk.Scrollbar(frame, orient="vertical", command=canvas.yview)
         
-        # Add scrollbar
-        scrollbar = tk.Scrollbar(frame, orient="vertical", command=listbox.yview)
-        listbox.configure(yscrollcommand=scrollbar.set)
-        
-        # Pack widgets
-        listbox.pack(side="left", fill="both", expand=True)
+        # Configure the canvas
+        canvas.configure(yscrollcommand=scrollbar.set)
+        canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
         
-        # Add items to listbox
-        for lens in lens_values:
-            listbox.insert(tk.END, lens)
-            
-        # Select current lens
-        if current_lens in lens_values:
-            index = lens_values.index(current_lens)
-            listbox.selection_set(index)
-            listbox.see(index)  # Ensure it's visible
+        # Create a frame inside the canvas to hold the items
+        items_frame = ttk.Frame(canvas)
+        canvas.create_window((0, 0), window=items_frame, anchor="nw")
         
         # Set dropdown active flag
         self.dropdown_active = True
@@ -910,21 +847,40 @@ class FilmArchiverWindow:
             self.last_dropdown_time = datetime.now().timestamp()
             self.dropdown_active = False
             
-            # Restore focus to the main window to fix input frame combo issues
-            self.root.focus_force()
-            
-            # Schedule a focus reset to ensure input frame combos work properly
-            self.root.after(100, lambda: self.file_list.focus_set())
-            
             # Stop event propagation
             if event:
                 return "break"
         
-        # Bind selection event
-        listbox.bind("<ButtonRelease-1>", lambda e: on_select(lens_values[listbox.curselection()[0]] if listbox.curselection() else None))
+        # Add items to the dropdown
+        for lens in lens_values:
+            item_frame = ttk.Frame(items_frame)
+            item_frame.pack(fill="x")
+            
+            # Create a label for each item
+            label = ttk.Label(item_frame, text=lens, padding=(5, 2))
+            label.pack(fill="x")
+            
+            # Highlight the current selection
+            if lens == current_lens:
+                label.configure(background="#e0e0e0")
+            
+            # Bind events
+            label.bind("<Button-1>", lambda e, l=lens: on_select(l))
+            
+            # Add hover effect
+            def on_enter(e, lbl=label):
+                lbl.configure(background="#e0e0e0")
+            
+            def on_leave(e, lbl=label, selected=(lens == current_lens)):
+                if not selected:
+                    lbl.configure(background="")
+            
+            label.bind("<Enter>", on_enter)
+            label.bind("<Leave>", on_leave)
         
-        # Double click to select
-        listbox.bind("<Double-Button-1>", lambda e: on_select(lens_values[listbox.curselection()[0]] if listbox.curselection() else None))
+        # Update the canvas scroll region
+        items_frame.update_idletasks()
+        canvas.configure(scrollregion=canvas.bbox("all"))
         
         # Store reference to active dropdown
         self.active_dropdown = dropdown
@@ -932,40 +888,15 @@ class FilmArchiverWindow:
         # Handle click outside
         def on_click_outside(event):
             if event.widget != dropdown and not event.widget.winfo_toplevel() == dropdown:
-                # Destroy the dropdown and clean up
-                try:
-                    dropdown.destroy()
-                except:
-                    pass
+                dropdown.destroy()
                 self.active_dropdown = None
                 self.root.unbind("<Button-1>", on_click_outside_id)
                 
                 # Set timestamp to prevent immediate reopening
                 self.last_dropdown_time = datetime.now().timestamp()
                 self.dropdown_active = False
-                
-                # Restore focus to the main window to fix input frame combo issues
-                self.root.focus_force()
-                
-                # Schedule a focus reset to ensure input frame combos work properly
-                self.root.after(100, lambda: self.file_list.focus_set())
         
         on_click_outside_id = self.root.bind("<Button-1>", on_click_outside, add="+")
-        
-        # Also bind to window movement to close dropdown
-        def on_window_move(event):
-            # Destroy the dropdown and clean up
-            try:
-                dropdown.destroy()
-            except:
-                pass
-            self.active_dropdown = None
-            
-            # Set timestamp to prevent immediate reopening
-            self.last_dropdown_time = datetime.now().timestamp()
-            self.dropdown_active = False
-            
-        self.root.bind("<Configure>", on_window_move, add="+")
         
         # Ensure dropdown is on top
         dropdown.lift()
