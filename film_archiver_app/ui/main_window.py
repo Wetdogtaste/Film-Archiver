@@ -403,9 +403,9 @@ class FilmArchiverWindow:
         
         def enter(event):
             nonlocal tooltip
-            x, y, _, _ = widget.bbox("insert")
-            x += widget.winfo_rootx() + 25
-            y += widget.winfo_rooty() + 20
+            # Fixed position: to the right and below the widget (no cursor jitter)
+            x = widget.winfo_rootx() + 25
+            y = widget.winfo_rooty() + widget.winfo_height() + 5
             
             tooltip = tk.Toplevel(widget)
             tooltip.wm_overrideredirect(True)
