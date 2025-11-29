@@ -647,36 +647,112 @@ class FilmArchiverWindow:
     def show_calendar(self):
         """Show date picker calendar"""
         top = tk.Toplevel(self.root)
-        top.title("Select Date")
-        top.transient(self.root)
+        top.overrideredirect(True)  # Remove window decorations (no stoplight buttons)
+        top.configure(background='white')
+        
+        # Add a thin border frame to make the popup visually distinct
+        border_frame = tk.Frame(top, background='#cccccc', padx=1, pady=1)
+        border_frame.pack(fill='both', expand=True)
+        
+        inner_frame = tk.Frame(border_frame, background='white')
+        inner_frame.pack(fill='both', expand=True)
+        
+        # Configure ttk styles for the calendar's month/year header
+        cal_style = ttk.Style(top)
+        cal_style.configure('TLabel', foreground='black', background='white')
+        cal_style.configure('TButton', foreground='black')
         
         # Create calendar with fixed configuration
-        cal = Calendar(top, 
+        cal = Calendar(inner_frame, 
                       selectmode='day', 
                       date_pattern='mm/dd/y',
                       showweeknumbers=False,  # Remove the extra column
-                      firstweekday='sunday'   # Start week on Sunday
+                      firstweekday='sunday',  # Start week on Sunday
+                      foreground='black',  # Main text color
+                      background='white',  # Main background
+                      headersforeground='black',  # Day name headers text color
+                      headersbackground='#f0f0f0',  # Day name headers background
+                      normalforeground='black',  # Normal day text color
+                      normalbackground='white',  # Normal day background
+                      weekendforeground='#555555',  # Weekend text color
+                      weekendbackground='white',  # Weekend background
+                      bordercolor='#cccccc'  # Border color
                      )
         cal.pack(padx=10, pady=10)
+        
+        # Try to directly configure the header label's foreground color
+        try:
+            # Access the internal header frame and configure text color
+            for widget in cal.winfo_children():
+                if hasattr(widget, 'winfo_children'):
+                    for child in widget.winfo_children():
+                        if isinstance(child, ttk.Label):
+                            child.configure(foreground='black')
+        except:
+            pass
+        
+        # Track the click-outside binding ID for cleanup
+        click_outside_id = None
+        
+        def cleanup_and_close():
+            """Clean up bindings and close the calendar"""
+            nonlocal click_outside_id
+            if click_outside_id:
+                try:
+                    self.root.unbind('<Button-1>', click_outside_id)
+                except:
+                    pass
+            top.destroy()
         
         def set_date():
             self.date_entry.delete(0, tk.END)
             self.date_entry.insert(0, cal.get_date())
             self.update_file_list()
-            top.destroy()
+            cleanup_and_close()
         
-        def on_click_outside(event=None):
-            if event.widget == top:
-                top.destroy()
+        def on_click_outside(event):
+            """Close calendar when clicking outside of it"""
+            # Check if the click is outside the calendar window
+            try:
+                # Get the widget that was clicked
+                clicked_widget = event.widget
+                
+                # Check if click is on the calendar window or its children
+                if clicked_widget == top or str(clicked_widget).startswith(str(top)):
+                    return
+                
+                # Check if click is within calendar bounds
+                cal_x = top.winfo_rootx()
+                cal_y = top.winfo_rooty()
+                cal_width = top.winfo_width()
+                cal_height = top.winfo_height()
+                
+                if (cal_x <= event.x_root <= cal_x + cal_width and
+                    cal_y <= event.y_root <= cal_y + cal_height):
+                    return
+                
+                # Click was outside, close the calendar
+                cleanup_and_close()
+            except:
+                pass
         
-        # Bind events
-        top.bind('<FocusOut>', on_click_outside)
+        # Bind date selection event (calendar closes when date is selected)
         cal.bind('<<CalendarSelected>>', lambda e: set_date())
         
         # Position calendar near date entry
         x = self.date_entry.winfo_rootx() + 10
         y = self.date_entry.winfo_rooty() + self.date_entry.winfo_height() + 10
         top.geometry(f"+{x}+{y}")
+        
+        # Update to get proper dimensions before binding click handler
+        top.update_idletasks()
+        
+        # Bind click-outside handler after a short delay to prevent immediate closing
+        def bind_click_outside():
+            nonlocal click_outside_id
+            click_outside_id = self.root.bind('<Button-1>', on_click_outside, add='+')
+        
+        top.after(100, bind_click_outside)
         
         # Make window float on top
         top.lift()
