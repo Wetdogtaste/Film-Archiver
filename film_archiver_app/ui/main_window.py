@@ -43,6 +43,25 @@ class FilmArchiverWindow:
             else:
                 # Reset to default color
                 combobox.configure(foreground="")  # Default color
+                
+    def validate_lens_input(self, event):
+        """Validate lens input without auto-capitalizing (allows mixed case)"""
+        # Get the combobox that triggered the event
+        combobox = event.widget
+        current_text = combobox.get()
+        
+        if current_text:
+            # Check for illegal characters (no auto-capitalize for lens)
+            illegal_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
+            is_valid = not any(char in current_text for char in illegal_chars)
+            
+            # Visual feedback
+            if not is_valid:
+                # Set text color to red for invalid input
+                combobox.configure(foreground="red")
+            else:
+                # Reset to default color
+                combobox.configure(foreground="")  # Default color
 
     def __init__(self, root):
         self.root = root
@@ -226,8 +245,8 @@ class FilmArchiverWindow:
         self.lens_model = ttk.Combobox(lens_frame, width=30)
         self.lens_model.pack(side='left', padx=5)
         self.lens_model['values'] = self.pref_manager.get_lenses()
-        self.lens_model.bind('<<ComboboxSelected>>', lambda e: (self.validate_combobox_input(e), self.update_file_list()))
-        self.lens_model.bind('<KeyRelease>', lambda e: (self.validate_combobox_input(e), self.update_file_list()))
+        self.lens_model.bind('<<ComboboxSelected>>', lambda e: (self.validate_lens_input(e), self.update_file_list()))
+        self.lens_model.bind('<KeyRelease>', lambda e: (self.validate_lens_input(e), self.update_file_list()))
         
         lens_buttons = ttk.Frame(lens_frame)
         lens_buttons.pack(side='left')
@@ -436,21 +455,21 @@ class FilmArchiverWindow:
             
     def add_lens_to_list(self):
         """Add current lens to saved list"""
-        lens = self.lens_model.get().strip().upper()
+        lens = self.lens_model.get().strip()
         if lens:
             self.pref_manager.add_lens(lens)
             self.lens_model['values'] = self.pref_manager.get_lenses()
 
     def remove_lens_from_list(self):
         """Remove current lens from saved list"""
-        lens = self.lens_model.get().strip().upper()
+        lens = self.lens_model.get().strip()
         if lens:
             self.pref_manager.remove_lens(lens)
             self.lens_model['values'] = self.pref_manager.get_lenses()
             
     def apply_lens_to_all(self):
         """Apply the current global lens to all files"""
-        lens = self.lens_model.get().strip().upper()
+        lens = self.lens_model.get().strip()
         if lens and self.files:
             # Clear all per-file lens settings
             self.file_lenses.clear()
@@ -539,8 +558,8 @@ class FilmArchiverWindow:
         if self.reverse_var.get():
             files_to_show.reverse()
             
-        # Get global lens value
-        global_lens = self.lens_model.get().strip().upper()
+        # Get global lens value (preserve case for lens)
+        global_lens = self.lens_model.get().strip()
             
         for file in files_to_show:
             filename = os.path.basename(file)
@@ -857,8 +876,8 @@ class FilmArchiverWindow:
         # Get cell coordinates
         x, y, width, height = self.file_list.bbox(item_id, column)
         
-        # Get current lens value (from per-file setting or global)
-        current_lens = self.file_lenses.get(file_path, self.lens_model.get().strip().upper())
+        # Get current lens value (from per-file setting or global, preserve case)
+        current_lens = self.file_lenses.get(file_path, self.lens_model.get().strip())
         
         # Get all lens values
         lens_values = self.pref_manager.get_lenses()
@@ -1101,8 +1120,8 @@ class FilmArchiverWindow:
                             exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = date_str.encode()
                             exif_dict['Exif'][piexif.ExifIFD.DateTimeDigitized] = date_str.encode()
                             
-                            # Add lens information if available
-                            lens = self.file_lenses.get(file, self.lens_model.get().strip().upper())
+                            # Add lens information if available (preserve case)
+                            lens = self.file_lenses.get(file, self.lens_model.get().strip())
                             if lens:
                                 # Set lens model in EXIF
                                 exif_dict['Exif'][piexif.ExifIFD.LensModel] = lens.encode()
