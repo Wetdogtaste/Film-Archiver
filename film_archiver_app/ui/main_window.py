@@ -847,6 +847,9 @@ class FilmArchiverWindow:
             self.last_dropdown_time = datetime.now().timestamp()
             self.dropdown_active = False
             
+            # Restore focus to the main window so input fields work
+            self.root.focus_force()
+            
             # Stop event propagation
             if event:
                 return "break"
@@ -895,6 +898,9 @@ class FilmArchiverWindow:
                 # Set timestamp to prevent immediate reopening
                 self.last_dropdown_time = datetime.now().timestamp()
                 self.dropdown_active = False
+                
+                # Restore focus to the main window so input fields work
+                self.root.focus_force()
         
         on_click_outside_id = self.root.bind("<Button-1>", on_click_outside, add="+")
         
