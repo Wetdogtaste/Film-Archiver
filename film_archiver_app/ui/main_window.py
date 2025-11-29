@@ -103,6 +103,7 @@ class FilmArchiverWindow:
         preview_container.pack(fill='both', expand=True, padx=10, pady=5)
         
         # Configure grid weights for preview container
+        preview_container.grid_columnconfigure(0, minsize=350)  # Fixed width for preview column
         preview_container.grid_columnconfigure(1, weight=1)
         preview_container.grid_rowconfigure(0, weight=1)
         
@@ -301,10 +302,9 @@ class FilmArchiverWindow:
         preview_frame = ttk.LabelFrame(parent, text="Preview", padding="10")
         preview_frame.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
         
-        # Set minimum width for preview
-        preview_frame.update()
+        # Set fixed size for preview area (visible even without image)
         preview_frame.grid_propagate(False)
-        preview_frame.configure(width=350)
+        preview_frame.configure(width=350, height=350)
         
         self.preview_label = ttk.Label(preview_frame)
         self.preview_label.pack(expand=True)
