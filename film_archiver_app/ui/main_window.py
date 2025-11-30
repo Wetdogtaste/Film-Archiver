@@ -11,6 +11,7 @@ from tkcalendar import Calendar
 import shutil
 import piexif
 import sys
+import subprocess
 
 from core.file_manager import FileManager
 from core.preferences import PreferenceManager
@@ -76,18 +77,59 @@ class FilmArchiverWindow:
         # Initialize variables
         self.files = []
         self.thumbnail_cache = {}
-        self.colors = LIGHT_THEME if not IS_MACOS else DARK_THEME
         self.file_lenses = {}  # Dictionary to store lens for each file
         self.active_combo = None  # Track active combobox
         self.dropdown_active = False  # Flag to prevent immediate reopening
         self.last_dropdown_time = 0  # Track when dropdown was last closed
         
+        # Detect system dark mode and set initial theme
+        self.is_dark_mode = self._detect_system_dark_mode()
+        self.colors = DARK_THEME if self.is_dark_mode else LIGHT_THEME
+        
         # Configure styles
-        style = ttk.Style()
-        style.configure("Dropdown.TFrame", relief="solid", borderwidth=1)
+        self.style = ttk.Style()
+        self.style.configure("Dropdown.TFrame", relief="solid", borderwidth=1)
         
         # Create UI
         self.create_main_layout()
+        
+        # Apply initial theme
+        self.apply_theme()
+        
+        # Start monitoring for OS theme changes
+        self._start_theme_monitor()
+    
+    def _detect_system_dark_mode(self):
+        """Detect if macOS is in dark mode"""
+        if IS_MACOS:
+            try:
+                result = subprocess.run(
+                    ['defaults', 'read', '-g', 'AppleInterfaceStyle'],
+                    capture_output=True,
+                    text=True
+                )
+                return result.stdout.strip().lower() == 'dark'
+            except Exception:
+                pass
+        return False
+    
+    def _start_theme_monitor(self):
+        """Start periodic monitoring for OS theme changes"""
+        self._check_theme_change()
+    
+    def _check_theme_change(self):
+        """Check if the OS theme has changed and update accordingly"""
+        current_dark_mode = self._detect_system_dark_mode()
+        if current_dark_mode != self.is_dark_mode:
+            self.is_dark_mode = current_dark_mode
+            self.colors = DARK_THEME if self.is_dark_mode else LIGHT_THEME
+            self.apply_theme()
+            # Re-apply theme to file list if files are present
+            if self.files:
+                self.update_file_list()
+        
+        # Check again in 1 second
+        self.root.after(1000, self._check_theme_change)
         
     def create_main_layout(self):
         """Create the main application layout"""
@@ -95,7 +137,7 @@ class FilmArchiverWindow:
         self.main_container = ttk.Frame(self.root)
         self.main_container.pack(fill='both', expand=True)
         
-        # Create UI sections
+        # Create UI sections (no header toggle - using OS theme detection)
         self.create_input_frame()
         
         # Create preview and file list container
@@ -115,11 +157,72 @@ class FilmArchiverWindow:
         
         # Create control frame
         self.create_control_frame()
+    
+    def apply_theme(self):
+        """Apply the current theme to the application - matches macOS Finder styling"""
+        colors = self.colors
+        
+        # Configure the root window background
+        self.root.configure(bg=colors['bg'])
+        
+        # Configure ttk styles for the current theme
+        self.style.configure('TFrame', background=colors['bg'])
+        self.style.configure('TLabel', background=colors['bg'], foreground=colors['fg'])
+        self.style.configure('TLabelframe', background=colors['bg'], foreground=colors['fg'])
+        self.style.configure('TLabelframe.Label', background=colors['bg'], foreground=colors['fg'])
+        self.style.configure('TButton', background=colors['button'])
+        self.style.configure('TEntry', fieldbackground=colors['entry_bg'], foreground=colors['fg'])
+        self.style.configure('TCombobox', fieldbackground=colors['entry_bg'], foreground=colors['fg'])
+        self.style.configure('TCheckbutton', background=colors['bg'], foreground=colors['fg'])
+        
+        # Configure Treeview with macOS Finder-like styling
+        # Use list_bg for the main background to match Finder's dark file list
+        list_bg = colors.get('list_bg', colors['entry_bg'])
+        
+        self.style.configure('Treeview', 
+                           background=list_bg,
+                           foreground=colors['fg'],
+                           fieldbackground=list_bg,
+                           borderwidth=0,
+                           relief='flat')
+        self.style.configure('Treeview.Heading',
+                           background=colors['button'],
+                           foreground=colors['fg'])
+        
+        # macOS blue selection color
+        self.style.map('Treeview',
+                      background=[('selected', colors['select_bg'])],
+                      foreground=[('selected', colors['select_fg'])])
+        
+        # Configure tooltip style
+        self.style.configure('Tooltip.TLabel',
+                           background=colors['tooltip_bg'],
+                           foreground=colors['tooltip_fg'])
+        
+        # Configure scrollbar style for dark mode
+        if self.is_dark_mode:
+            self.style.configure('TScrollbar', 
+                               background=colors['bg'],
+                               troughcolor=colors['list_bg'],
+                               borderwidth=0)
+        
+        # Update the lens cell tag colors for the file list
+        if hasattr(self, 'file_list'):
+            if self.is_dark_mode:
+                # Dark mode: use the list background, no white borders
+                self.file_list.tag_configure("lens_cell", 
+                                            background=colors['button'], 
+                                            foreground=colors['fg'])
+            else:
+                # Light mode styling
+                self.file_list.tag_configure("lens_cell", 
+                                            background="#e8e8e8", 
+                                            foreground="#000000")
         
     def create_input_frame(self):
         """Create the input controls section"""
         input_frame = ttk.LabelFrame(self.main_container, text="Settings", padding="10")
-        input_frame.pack(fill="x", padx=10, pady=5)
+        input_frame.pack(fill="x", padx=10, pady=(10, 5))
         
         # Roll Number
         roll_frame = ttk.Frame(input_frame)
@@ -553,6 +656,19 @@ class FilmArchiverWindow:
         for item in self.file_list.get_children():
             self.file_list.delete(item)
             
+        # Configure lens cell tag colors based on current theme
+        colors = self.colors
+        if self.is_dark_mode:
+            # Dark mode: use button color for lens cells (slightly lighter than list bg)
+            self.file_list.tag_configure("lens_cell", 
+                                        background=colors['button'], 
+                                        foreground=colors['fg'])
+        else:
+            # Light mode styling
+            self.file_list.tag_configure("lens_cell", 
+                                        background="#e8e8e8", 
+                                        foreground="#000000")
+            
         # Add files to list
         files_to_show = self.files.copy()
         if self.reverse_var.get():
@@ -578,9 +694,6 @@ class FilmArchiverWindow:
             item_id = self.file_list.insert("", "end", values=(
                 filename, original_date, new_name, new_date, lens_display
             ))
-            
-            # Style the lens cell to indicate it's clickable with a border
-            self.file_list.tag_configure("lens_cell", background="#e8e8e8", foreground="#000000")
             
             # Apply the tag to the item
             self.file_list.item(item_id, tags=("lens_cell",))

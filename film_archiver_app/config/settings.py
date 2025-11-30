@@ -73,31 +73,37 @@ MAX_THUMBNAIL_SIZE = (300, 300)
 MAX_CACHE_ENTRIES = 50
 THUMBNAIL_QUALITY = 85
 
-# Theme Colors
+# Theme Colors - macOS Finder-matching styles
 LIGHT_THEME = {
-    'bg': '#FFFFFF',
-    'fg': '#000000',
-    'select_bg': '#0A84FF',
-    'select_fg': '#FFFFFF',
-    'button': '#F0F0F0',
-    'button_active': '#E0E0E0',
-    'entry_bg': '#FFFFFF',
+    'bg': '#ECECEC',           # macOS light mode window background
+    'fg': '#000000',           # Black text
+    'select_bg': '#0A84FF',    # macOS blue selection
+    'select_fg': '#FFFFFF',    # White text on selection
+    'button': '#FFFFFF',       # White button background
+    'button_active': '#E5E5E5',# Slightly darker on hover
+    'entry_bg': '#FFFFFF',     # White entry background
+    'list_bg': '#FFFFFF',      # White list background
+    'list_row_bg': '#FFFFFF',  # List row background
     'tooltip_bg': '#FFFFEA',
     'tooltip_fg': '#000000',
-    'error': '#FF3B30'
+    'error': '#FF3B30',
+    'border': '#C8C8C8',       # Light border color
 }
 
 DARK_THEME = {
-    'bg': '#2D2D2D',
-    'fg': '#FFFFFF',
-    'select_bg': '#454545',
-    'select_fg': '#FFFFFF',
-    'button': '#404040',
-    'button_active': '#505050',
-    'entry_bg': '#383838',
-    'tooltip_bg': '#4A4A4A',
+    'bg': '#2D2D2D',           # macOS dark mode window background (Finder sidebar)
+    'fg': '#FFFFFF',           # White text
+    'select_bg': '#0A84FF',    # macOS blue selection (same as light theme)
+    'select_fg': '#FFFFFF',    # White text on selection
+    'button': '#3A3A3A',       # Dark button background
+    'button_active': '#4A4A4A',# Slightly lighter on hover
+    'entry_bg': '#1E1E1E',     # Dark entry background (matches Finder list rows)
+    'list_bg': '#1E1E1E',      # Dark list background (Finder file list)
+    'list_row_bg': '#2D2D2D',  # Alternating row color
+    'tooltip_bg': '#3A3A3A',
     'tooltip_fg': '#FFFFFF',
-    'error': '#FF6B6B'
+    'error': '#FF453A',        # macOS red error
+    'border': '#3D3D3D',       # Dark border color
 }
 
 def configure_logging():
