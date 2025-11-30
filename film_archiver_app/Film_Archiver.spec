@@ -1,8 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 import sys
+import os
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 block_cipher = None
+
+# Get the directory containing the spec file
+spec_dir = os.path.dirname(os.path.abspath(SPEC))
 
 # Collect all PIL and tkinter submodules
 hidden_imports = collect_submodules('PIL') + [
@@ -15,11 +19,56 @@ hidden_imports = collect_submodules('PIL') + [
     'piexif',
     'Foundation',
     'AppKit',
-    'objc'
+    'objc',
+    'tkinterdnd2',
+    # Application modules - these MUST be explicitly listed
+    'config',
+    'config.settings',
+    'core',
+    'core.file_manager',
+    'core.preferences',
+    'ui',
+    'ui.main_window',
+    'ui.widgets',
+    'ui.widgets.toggle_switch',
+    'utils',
+    'utils.macos_dnd',
 ]
 
 # Collect all necessary data files
 datas = collect_data_files('tkcalendar') + collect_data_files('PIL')
+
+# Add tkinterdnd2 data files (including the native tkdnd library)
+try:
+    tkdnd_datas = collect_data_files('tkinterdnd2')
+    datas.extend(tkdnd_datas)
+    print("Found tkinterdnd2 data files")
+except Exception as e:
+    print(f"Warning: Could not collect tkinterdnd2 data files: {e}")
+
+# Try to find and include the tkdnd library from tkinterdnd2 package
+try:
+    import tkinterdnd2
+    tkdnd_path = os.path.dirname(tkinterdnd2.__file__)
+    tkdnd_lib = os.path.join(tkdnd_path, 'tkdnd')
+    if os.path.exists(tkdnd_lib):
+        # Add the entire tkdnd folder to the bundle at multiple locations
+        # to ensure it can be found
+        datas.append((tkdnd_lib, 'tkinterdnd2/tkdnd'))
+        datas.append((tkdnd_lib, 'tkdnd'))  # Also at root level
+        print(f"Found tkdnd library at: {tkdnd_lib}")
+        
+        # Also look for platform-specific tkdnd binaries
+        for subdir in os.listdir(tkdnd_lib):
+            subdir_path = os.path.join(tkdnd_lib, subdir)
+            if os.path.isdir(subdir_path):
+                print(f"  Including tkdnd subdirectory: {subdir}")
+    else:
+        print(f"tkdnd directory not found at: {tkdnd_lib}")
+except ImportError:
+    print("Warning: tkinterdnd2 not found, drag and drop will use native macOS fallback")
+
+# Include application modules as data files as well (for resources)
 datas.extend([
     ('config', 'config'),
     ('core', 'core'),
@@ -27,14 +76,22 @@ datas.extend([
     ('utils', 'utils')
 ])
 
+# Runtime hooks - runs before the main script
+runtime_hooks_list = [
+    os.path.join(spec_dir, 'hooks', 'rthook_tkinterdnd2.py'),
+]
+
+# Filter out runtime hooks that don't exist
+runtime_hooks_list = [h for h in runtime_hooks_list if os.path.exists(h)]
+
 a = Analysis(['main.py'],
-             pathex=[],
+             pathex=[spec_dir],  # Include spec directory for module resolution
              binaries=[],
              datas=datas,
              hiddenimports=hidden_imports,
              hookspath=[],
              hooksconfig={},
-             runtime_hooks=[],
+             runtime_hooks=runtime_hooks_list,
              excludes=[],
              win_no_prefer_redirects=False,
              win_private_assemblies=False,
@@ -70,7 +127,7 @@ coll = COLLECT(exe,
 
 app = BUNDLE(coll,
             name='Film Archiver.app',
-            icon='AppIcon.icns',  # This line implements the icon
+            icon='AppIcon.icns',
             bundle_identifier='com.filmarchiver.app',
             info_plist={
                 'LSMinimumSystemVersion': '10.13.0',

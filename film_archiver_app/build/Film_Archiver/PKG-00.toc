@@ -41,6 +41,10 @@
    '/Users/michaelziebell/Documents/Develop '
    'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/loader/pyiboot01_bootstrap.py',
    'PYSOURCE'),
+  ('rthook_tkinterdnd2',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/hooks/rthook_tkinterdnd2.py',
+   'PYSOURCE'),
   ('pyi_rth_inspect',
    '/Users/michaelziebell/Documents/Develop '
    'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_inspect.py',

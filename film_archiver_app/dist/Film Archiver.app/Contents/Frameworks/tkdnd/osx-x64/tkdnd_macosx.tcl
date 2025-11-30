@@ -1,0 +1,1 @@
+../../../Resources/tkdnd/osx-x64/tkdnd_macosx.tcl

@@ -1,0 +1,1 @@
+../../../Resources/tkdnd/osx-arm64/tkdnd_windows.tcl

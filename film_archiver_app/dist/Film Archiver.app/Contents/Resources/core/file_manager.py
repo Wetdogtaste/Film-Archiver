@@ -22,44 +22,20 @@ class FileManager:
 
     def select_files(self) -> List[str]:
         """
-        Open file dialog and return selected files with proper macOS handling
+        Open file dialog and return selected files
+        Uses standard tkinter file dialog for maximum compatibility
         """
         try:
-            if IS_MACOS:
-                try:
-                    # Use native macOS file dialog
-                    from Foundation import NSOpenPanel
-                    panel = NSOpenPanel.alloc().init()
-                except ImportError:
-                    # Fallback to regular dialog if PyObjC is not available
-                    return list(filedialog.askopenfilenames(
-                        title="Select Image Files",
-                        filetypes=[
-                            ("Image files", " ".join(SUPPORTED_FORMATS.keys())),
-                            ("All files", "*.*")
-                        ]
-                    ))
-                panel.setCanChooseFiles_(True)
-                panel.setCanChooseDirectories_(False)
-                panel.setAllowsMultipleSelection_(True)
-                
-                # Set allowed file types
-                allowed_types = [ext[1:] for ext in SUPPORTED_FORMATS.keys()]
-                panel.setAllowedFileTypes_(allowed_types)
-
-                if panel.runModal() == 1:  # NSModalResponseOK
-                    return [str(url.path()) for url in panel.URLs()]
-                return []
-            else:
-                # Regular file dialog for other platforms
-                files = filedialog.askopenfilenames(
-                    title="Select Image Files",
-                    filetypes=[
-                        ("Image files", " ".join(SUPPORTED_FORMATS.keys())),
-                        ("All files", "*.*")
-                    ]
-                )
-                return list(files)
+            # Use standard tkinter file dialog for all platforms
+            # This avoids importing PyObjC Foundation which can cause phantom Tk windows
+            files = filedialog.askopenfilenames(
+                title="Select Image Files",
+                filetypes=[
+                    ("Image files", " ".join(SUPPORTED_FORMATS.keys())),
+                    ("All files", "*.*")
+                ]
+            )
+            return list(files)
 
         except Exception as e:
             self.logger.error(f"Error in file selection: {e}")

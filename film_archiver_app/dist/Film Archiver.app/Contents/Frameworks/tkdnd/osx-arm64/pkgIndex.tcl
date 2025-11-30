@@ -1,0 +1,1 @@
+../../../Resources/tkdnd/osx-arm64/pkgIndex.tcl

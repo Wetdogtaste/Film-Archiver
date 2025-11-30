@@ -437,6 +437,86 @@
    '/Users/michaelziebell/Documents/Develop '
    'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyObjCTools/KeyValueCoding.py',
    'PYMODULE'),
+  ('Quartz',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/__init__.py',
+   'PYMODULE'),
+  ('Quartz.CoreGraphics',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/CoreGraphics/__init__.py',
+   'PYMODULE'),
+  ('Quartz.CoreGraphics._contextmanager',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/CoreGraphics/_contextmanager.py',
+   'PYMODULE'),
+  ('Quartz.CoreGraphics._metadata',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/CoreGraphics/_metadata.py',
+   'PYMODULE'),
+  ('Quartz.CoreVideo',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/CoreVideo/__init__.py',
+   'PYMODULE'),
+  ('Quartz.CoreVideo._metadata',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/CoreVideo/_metadata.py',
+   'PYMODULE'),
+  ('Quartz.ImageIO',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/ImageIO/__init__.py',
+   'PYMODULE'),
+  ('Quartz.ImageIO._metadata',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/ImageIO/_metadata.py',
+   'PYMODULE'),
+  ('Quartz.ImageKit',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/ImageKit/__init__.py',
+   'PYMODULE'),
+  ('Quartz.ImageKit._metadata',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/ImageKit/_metadata.py',
+   'PYMODULE'),
+  ('Quartz.PDFKit',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/PDFKit/__init__.py',
+   'PYMODULE'),
+  ('Quartz.PDFKit._metadata',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/PDFKit/_metadata.py',
+   'PYMODULE'),
+  ('Quartz.QuartzComposer',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/QuartzComposer/__init__.py',
+   'PYMODULE'),
+  ('Quartz.QuartzComposer._metadata',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/QuartzComposer/_metadata.py',
+   'PYMODULE'),
+  ('Quartz.QuartzCore',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/QuartzCore/__init__.py',
+   'PYMODULE'),
+  ('Quartz.QuartzCore._metadata',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/QuartzCore/_metadata.py',
+   'PYMODULE'),
+  ('Quartz.QuartzFilters',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/QuartzFilters/__init__.py',
+   'PYMODULE'),
+  ('Quartz.QuartzFilters._metadata',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/QuartzFilters/_metadata.py',
+   'PYMODULE'),
+  ('Quartz.QuickLookUI',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/QuickLookUI/__init__.py',
+   'PYMODULE'),
+  ('Quartz.QuickLookUI._metadata',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/Quartz/QuickLookUI/_metadata.py',
+   'PYMODULE'),
   ('__future__',
    '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/__future__.py',
    'PYMODULE'),
@@ -2129,6 +2209,14 @@
    '/Users/michaelziebell/Documents/Develop '
    'Projects/GitHub/Film-Archiver/film_archiver_app/ui/main_window.py',
    'PYMODULE'),
+  ('ui.widgets',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/ui/widgets/__init__.py',
+   'PYMODULE'),
+  ('ui.widgets.toggle_switch',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/ui/widgets/toggle_switch.py',
+   'PYMODULE'),
   ('unittest',
    '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/__init__.py',
    'PYMODULE'),
@@ -2179,6 +2267,14 @@
    'PYMODULE'),
   ('urllib.response',
    '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/urllib/response.py',
+   'PYMODULE'),
+  ('utils',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/utils/__init__.py',
+   'PYMODULE'),
+  ('utils.macos_dnd',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/utils/macos_dnd.py',
    'PYMODULE'),
   ('webbrowser',
    '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/webbrowser.py',

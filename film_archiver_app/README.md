@@ -5,7 +5,6 @@ A tool for organizing and renaming film photography scans.
 ## Features
 
 - Automatically rename scanned film photos with customizable naming scheme
-- Drag and drop support for easy file import
 - Preview images before processing
 - Save frequently used camera models, film stocks, and lenses
 - Update file dates to match capture dates
@@ -69,7 +68,7 @@ This ensures proper sorting regardless of archive size.
 
 ## Usage Tips
 
-1. Click "Add Files" or drag and drop files directly to add your scanned photos
+1. Click "Add Files" to add your scanned photos
 2. Enter roll number, camera model, film type, and lens model (if applicable)
 3. Use the calendar to set the capture date
 4. Toggle "Reverse File Order" if needed (useful when labs scan rolls in reverse)
@@ -82,13 +81,17 @@ This ensures proper sorting regardless of archive size.
 
 ## Version History
 
+### 1.2.2 (2025-11-30)
+- Fixed blank "tk" window appearing behind main app
+- Fixed image preview not working in bundled app
+- Improved stability for distributed app
+
 ### 1.2.1 (2025-11-30)
 - Fixed blank "tk" window appearing after app close
 - Improved DMG installer with visual drag-to-Applications instruction
 - Disabled console window in bundled app
 
 ### 1.2.0 (2025-11-30)
-- Added drag and drop support for adding files
 - Added dynamic roll number padding (supports 1000+ rolls)
 - Improved dark mode theming and UI consistency
 - Fixed image preview display issues

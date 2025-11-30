@@ -20,26 +20,23 @@ from config.settings import (
     MAX_THUMBNAIL_SIZE, MAX_CACHE_ENTRIES
 )
 
-# Try to import TkinterDnD for drag and drop support
-try:
-    from tkinterdnd2 import DND_FILES
-    USE_TKDND = True
-except ImportError:
-    USE_TKDND = False
+# Note: TkinterDnD imports are done lazily when needed
+# This is set dynamically based on whether the root window supports DnD
+USE_TKDND = False
 
-# macOS native drag and drop support using PyObjC
-USE_MACOS_DND = False
-if IS_MACOS:
+def _check_dnd_support():
+    """Check if DnD support is available and return DND_FILES constant"""
+    global USE_TKDND
     try:
-        from AppKit import (
-            NSView, NSFilenamesPboardType,
-            NSDragOperationCopy, NSDragOperationNone
-        )
-        from Foundation import NSObject
-        import objc
-        USE_MACOS_DND = True
+        from tkinterdnd2 import DND_FILES
+        USE_TKDND = True
+        return DND_FILES
     except ImportError:
-        pass
+        USE_TKDND = False
+        return None
+    except Exception:
+        USE_TKDND = False
+        return None
 
 class FilmArchiverWindow:
     def validate_combobox_input(self, event):
@@ -187,6 +184,13 @@ class FilmArchiverWindow:
         # Configure the root window background
         self.root.configure(bg=colors['bg'])
         
+        # Force the theme to use aqua base but override colors
+        # This helps ensure ttk widgets respect our color settings on macOS
+        try:
+            self.style.theme_use('aqua' if IS_MACOS else 'clam')
+        except:
+            pass
+        
         # Configure ttk styles for the current theme
         self.style.configure('TFrame', background=colors['bg'])
         self.style.configure('TLabel', background=colors['bg'], foreground=colors['fg'])
@@ -196,6 +200,11 @@ class FilmArchiverWindow:
         self.style.configure('TEntry', fieldbackground=colors['entry_bg'], foreground=colors['fg'])
         self.style.configure('TCombobox', fieldbackground=colors['entry_bg'], foreground=colors['fg'])
         self.style.configure('TCheckbutton', background=colors['bg'], foreground=colors['fg'])
+        
+        # Use style mapping to ensure colors apply in different states
+        self.style.map('TLabel', foreground=[('!disabled', colors['fg'])])
+        self.style.map('TLabelframe.Label', foreground=[('!disabled', colors['fg'])])
+        self.style.map('TCheckbutton', foreground=[('!disabled', colors['fg'])])
         
         # Configure Treeview with macOS Finder-like styling
         # Use list_bg for the main background to match Finder's dark file list
@@ -240,6 +249,10 @@ class FilmArchiverWindow:
                 self.file_list.tag_configure("lens_cell", 
                                             background="#e8e8e8", 
                                             foreground="#000000")
+        
+        # Update preview label background color for theme changes
+        if hasattr(self, 'preview_label'):
+            self.preview_label.configure(bg=colors['bg'], fg=colors['fg'])
         
     def create_input_frame(self):
         """Create the input controls section"""
@@ -411,12 +424,16 @@ class FilmArchiverWindow:
         # Reverse Order
         reverse_frame = ttk.Frame(input_frame)
         reverse_frame.pack(fill='x', pady=5)
-        self.reverse_var = tk.BooleanVar()
+        self.reverse_var = tk.BooleanVar(value=False)
         self.reverse_check = ttk.Checkbutton(reverse_frame,
                                            text="Reverse File Order",
                                            variable=self.reverse_var,
                                            command=self.update_file_list)
         self.reverse_check.pack(side='left', padx=(95, 0))
+        
+        # Force the checkbox to show as unchecked (not tristate/alternate)
+        # This is needed for macOS aqua theme which defaults to tristate indicator
+        self.reverse_check.state(['!alternate', '!selected'])
         
         self.create_tooltip(self.reverse_check,
             "Film labs often scan rolls in reverse.\n"
@@ -431,8 +448,16 @@ class FilmArchiverWindow:
         preview_frame.grid_propagate(False)
         preview_frame.configure(width=350, height=350)
         
-        self.preview_label = ttk.Label(preview_frame)
-        self.preview_label.pack(expand=True)
+        # Store reference to the preview frame for theming
+        self.preview_frame = preview_frame
+        
+        # Use tk.Label instead of ttk.Label for more reliable image display on macOS
+        # ttk.Label can have issues with images on certain macOS versions/themes
+        self.preview_label = tk.Label(preview_frame, bg=self.colors['bg'])
+        self.preview_label.pack(expand=True, fill='both')
+        
+        # Initialize preview image reference to None
+        self._current_preview_image = None
         
     def create_file_list_frame(self, parent):
         """Create the file list section"""
@@ -490,13 +515,43 @@ class FilmArchiverWindow:
         # Store reference to list_frame for drop zone visual feedback
         self.list_frame = list_frame
         
-        # Set up drag and drop if available
-        if USE_TKDND:
-            self.setup_drag_drop(list_frame)
+        # Set up drag and drop if available (check lazily)
+        self.setup_drag_drop(list_frame)
         
     def setup_drag_drop(self, drop_target):
         """Set up drag and drop functionality on the file list area"""
+        global USE_TKDND
+        
+        # First, try TkinterDnD2 (preferred method)
+        if self._setup_tkdnd(drop_target):
+            return
+        
+        # Fall back to native macOS drag-and-drop if available
+        if IS_MACOS:
+            if self._setup_native_macos_dnd(drop_target):
+                return
+        
+        # If all else fails, log that drag-and-drop is not available
+        logging.info("Drag and drop not available - use 'Add Files' button")
+    
+    def _setup_tkdnd(self, drop_target):
+        """Try to set up TkinterDnD2 drag and drop."""
+        global USE_TKDND
+        
+        # Try to get DND_FILES constant (lazy import)
+        DND_FILES = _check_dnd_support()
+        
+        if DND_FILES is None:
+            logging.info("TkinterDnD2 not available")
+            return False
+        
         try:
+            # Check if the root window supports DnD (was created with TkinterDnD.Tk())
+            if not hasattr(drop_target, 'drop_target_register'):
+                logging.info("Root window does not support TkinterDnD")
+                USE_TKDND = False
+                return False
+            
             # Register the drop target to accept files
             drop_target.drop_target_register(DND_FILES)
             
@@ -511,9 +566,52 @@ class FilmArchiverWindow:
             self.file_list.dnd_bind('<<DropLeave>>', self.on_drag_leave)
             self.file_list.dnd_bind('<<Drop>>', self.on_drop)
             
-            logging.info("Drag and drop enabled for file list")
+            USE_TKDND = True
+            logging.info("TkinterDnD2 drag and drop enabled")
+            return True
         except Exception as e:
-            logging.warning(f"Failed to setup drag and drop: {e}")
+            USE_TKDND = False
+            logging.warning(f"Failed to setup TkinterDnD2: {e}")
+            return False
+    
+    def _setup_native_macos_dnd(self, drop_target):
+        """Try to set up native macOS drag and drop using PyObjC."""
+        # Native macOS drag-and-drop via PyObjC overlay window is disabled
+        # because it causes segmentation faults in the bundled app.
+        # Users can use the "Add Files" button instead.
+        logging.info("Native macOS drag-and-drop disabled (use 'Add Files' button)")
+        return False
+    
+    def _handle_native_drop(self, paths):
+        """Handle file drop from native macOS drag-and-drop."""
+        if not paths:
+            return
+        
+        # Process the dropped paths (files and folders)
+        new_files = self.file_manager.process_dropped_paths(paths)
+        
+        if new_files:
+            # Add new files and update display
+            self.files.extend(new_files)
+            self.update_file_list()
+            
+            # Select first file
+            if self.file_list.get_children():
+                first_item = self.file_list.get_children()[0]
+                self.file_list.selection_set(first_item)
+                self.on_file_select()
+    
+    def _handle_native_drag_enter(self):
+        """Handle drag enter from native macOS drag-and-drop."""
+        if not self.drop_highlight_active:
+            self.drop_highlight_active = True
+            self.show_drop_highlight()
+    
+    def _handle_native_drag_leave(self):
+        """Handle drag leave from native macOS drag-and-drop."""
+        if self.drop_highlight_active:
+            self.drop_highlight_active = False
+            self.hide_drop_highlight()
     
     def on_drag_enter(self, event):
         """Handle drag enter event - show visual feedback"""
@@ -928,63 +1026,154 @@ class FilmArchiverWindow:
             self.update_preview(selected_file)
             
     def update_preview(self, filepath=None):
-        """Update the preview image"""
+        """Update the preview image with improved error handling"""
+        # Clear any previous text
+        self.preview_label.configure(text='')
+        
         if not filepath:
             self.preview_label.configure(image='')
+            # Clear the reference to allow garbage collection
+            self.preview_label.image = None
+            self._current_preview_image = None
             return
             
         # Check cache first
         if filepath in self.thumbnail_cache:
-            self.preview_label.configure(image=self.thumbnail_cache[filepath])
-            return
-            
-        # Create new thumbnail
-        thumbnail = self.file_manager.create_thumbnail(filepath, MAX_THUMBNAIL_SIZE)
-        if thumbnail:
-            photo = ImageTk.PhotoImage(thumbnail)
-            self.thumbnail_cache[filepath] = photo
+            photo = self.thumbnail_cache[filepath]
             self.preview_label.configure(image=photo)
-            
-            # Limit cache size
-            if len(self.thumbnail_cache) > MAX_CACHE_ENTRIES:
-                # Remove oldest entries
-                oldest = list(self.thumbnail_cache.keys())[:-MAX_CACHE_ENTRIES]
-                for key in oldest:
-                    del self.thumbnail_cache[key]
+            # Keep a reference to prevent garbage collection
+            self.preview_label.image = photo
+            self._current_preview_image = photo
+            return
+        
+        # Check if it's a RAW format that PIL can't handle
+        ext = os.path.splitext(filepath)[1].lower()
+        raw_formats = ['.cr2', '.cr3', '.crw', '.nef', '.arw', '.raw', '.raf', '.dng']
+        
+        if ext in raw_formats:
+            # Try to extract embedded JPEG thumbnail from RAW files
+            thumbnail = self._extract_raw_thumbnail(filepath)
+            if thumbnail is None:
+                # Show informative message for RAW files
+                self.preview_label.configure(
+                    image='',
+                    text=f"Preview not available\nfor {ext.upper()} files",
+                    fg=self.colors['fg']
+                )
+                self.preview_label.image = None
+                self._current_preview_image = None
+                return
+        else:
+            # Create new thumbnail for standard image formats
+            thumbnail = self.file_manager.create_thumbnail(filepath, MAX_THUMBNAIL_SIZE)
+        
+        if thumbnail:
+            try:
+                # Explicitly pass master to ensure PhotoImage is created on the correct Tk instance
+                photo = ImageTk.PhotoImage(thumbnail, master=self.root)
+                self.thumbnail_cache[filepath] = photo
+                self.preview_label.configure(image=photo, text='')
+                # Keep a reference to prevent garbage collection
+                self.preview_label.image = photo
+                self._current_preview_image = photo
+                
+                # Limit cache size
+                if len(self.thumbnail_cache) > MAX_CACHE_ENTRIES:
+                    # Remove oldest entries
+                    oldest = list(self.thumbnail_cache.keys())[:-MAX_CACHE_ENTRIES]
+                    for key in oldest:
+                        del self.thumbnail_cache[key]
+            except Exception as e:
+                logging.error(f"Error creating PhotoImage: {e}", exc_info=True)
+                self.preview_label.configure(
+                    image='',
+                    text="Error loading preview",
+                    fg=self.colors['fg']
+                )
+                self.preview_label.image = None
+                self._current_preview_image = None
+        else:
+            # Show error message when thumbnail creation fails
+            self.preview_label.configure(
+                image='',
+                text="Unable to load preview",
+                fg=self.colors['fg']
+            )
+            self.preview_label.image = None
+            self._current_preview_image = None
+    
+    def _extract_raw_thumbnail(self, filepath):
+        """Try to extract embedded JPEG thumbnail from RAW files"""
+        try:
+            # Try using piexif to extract thumbnail
+            import piexif
+            exif_dict = piexif.load(filepath)
+            if 'thumbnail' in exif_dict and exif_dict['thumbnail']:
+                from io import BytesIO
+                thumbnail_data = exif_dict['thumbnail']
+                img = Image.open(BytesIO(thumbnail_data))
+                img.thumbnail(MAX_THUMBNAIL_SIZE, Image.Resampling.LANCZOS)
+                return img
+        except Exception as e:
+            logging.debug(f"Could not extract RAW thumbnail: {e}")
+        return None
                     
     def show_calendar(self):
         """Show date picker calendar"""
+        # Get theme-aware colors
+        colors = self.colors
+        if self.is_dark_mode:
+            bg_color = colors['bg']
+            fg_color = colors['fg']
+            border_color = colors['border']
+            header_bg = colors['button']
+            entry_bg = colors['entry_bg']
+            weekend_fg = '#AAAAAA'
+        else:
+            bg_color = 'white'
+            fg_color = 'black'
+            border_color = '#cccccc'
+            header_bg = '#f0f0f0'
+            entry_bg = 'white'
+            weekend_fg = '#555555'
+        
         top = tk.Toplevel(self.root)
         top.overrideredirect(True)  # Remove window decorations (no stoplight buttons)
-        top.configure(background='white')
+        top.configure(background=bg_color)
         
         # Add a thin border frame to make the popup visually distinct
-        border_frame = tk.Frame(top, background='#cccccc', padx=1, pady=1)
+        border_frame = tk.Frame(top, background=border_color, padx=1, pady=1)
         border_frame.pack(fill='both', expand=True)
         
-        inner_frame = tk.Frame(border_frame, background='white')
+        inner_frame = tk.Frame(border_frame, background=bg_color)
         inner_frame.pack(fill='both', expand=True)
         
         # Configure ttk styles for the calendar's month/year header
         cal_style = ttk.Style(top)
-        cal_style.configure('TLabel', foreground='black', background='white')
-        cal_style.configure('TButton', foreground='black')
+        cal_style.configure('TLabel', foreground=fg_color, background=bg_color)
+        cal_style.configure('TButton', foreground=fg_color)
         
-        # Create calendar with fixed configuration
+        # Create calendar with theme-aware configuration
         cal = Calendar(inner_frame, 
                       selectmode='day', 
                       date_pattern='mm/dd/y',
                       showweeknumbers=False,  # Remove the extra column
                       firstweekday='sunday',  # Start week on Sunday
-                      foreground='black',  # Main text color
-                      background='white',  # Main background
-                      headersforeground='black',  # Day name headers text color
-                      headersbackground='#f0f0f0',  # Day name headers background
-                      normalforeground='black',  # Normal day text color
-                      normalbackground='white',  # Normal day background
-                      weekendforeground='#555555',  # Weekend text color
-                      weekendbackground='white',  # Weekend background
-                      bordercolor='#cccccc'  # Border color
+                      foreground=fg_color,  # Main text color
+                      background=bg_color,  # Main background
+                      headersforeground=fg_color,  # Day name headers text color
+                      headersbackground=header_bg,  # Day name headers background
+                      normalforeground=fg_color,  # Normal day text color
+                      normalbackground=entry_bg,  # Normal day background
+                      weekendforeground=weekend_fg,  # Weekend text color
+                      weekendbackground=entry_bg,  # Weekend background
+                      bordercolor=border_color,  # Border color
+                      selectforeground=colors['select_fg'],  # Selected day text
+                      selectbackground=colors['select_bg'],  # Selected day background
+                      othermonthforeground='#666666' if self.is_dark_mode else '#999999',
+                      othermonthbackground=entry_bg,
+                      othermonthweforeground='#555555' if self.is_dark_mode else '#aaaaaa',
+                      othermonthwebackground=entry_bg
                      )
         cal.pack(padx=10, pady=10)
         
@@ -995,7 +1184,7 @@ class FilmArchiverWindow:
                 if hasattr(widget, 'winfo_children'):
                     for child in widget.winfo_children():
                         if isinstance(child, ttk.Label):
-                            child.configure(foreground='black')
+                            child.configure(foreground=fg_color)
         except:
             pass
         
