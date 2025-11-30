@@ -84,7 +84,7 @@ See the detailed README in the `film_archiver_app` directory for installation an
 
 ## Version
 
-Current version: 1.2.0
+Current version: 1.2.2
 
 ## Author
 
