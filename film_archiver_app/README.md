@@ -82,6 +82,11 @@ This ensures proper sorting regardless of archive size.
 
 ## Version History
 
+### 1.2.1 (2025-11-30)
+- Fixed blank "tk" window appearing after app close
+- Improved DMG installer with visual drag-to-Applications instruction
+- Disabled console window in bundled app
+
 ### 1.2.0 (2025-11-30)
 - Added drag and drop support for adding files
 - Added dynamic roll number padding (supports 1000+ rolls)

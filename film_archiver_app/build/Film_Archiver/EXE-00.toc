@@ -1,7 +1,7 @@
 ('/Users/michaelziebell/Documents/Develop '
  'Projects/GitHub/Film-Archiver/film_archiver_app/build/Film_Archiver/Film '
  'Archiver',
- True,
+ False,
  False,
  True,
  None,
@@ -75,9 +75,9 @@
  [],
  False,
  False,
- 1764528891,
- [('run',
+ 1764530198,
+ [('runw',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/bootloader/Darwin-64bit/run',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/bootloader/Darwin-64bit/runw',
    'EXECUTABLE')],
  '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/Python')

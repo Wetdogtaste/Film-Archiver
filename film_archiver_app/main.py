@@ -5,7 +5,6 @@ Film Archiver - Main Entry Point
 import sys
 import logging
 import tkinter as tk
-from tkinter import messagebox
 
 # Try to import TkinterDnD for drag and drop support
 try:
@@ -54,10 +53,15 @@ def main():
         
     except Exception as e:
         logging.critical(f"Fatal error: {e}", exc_info=True)
-        messagebox.showerror(
-            "Fatal Error",
-            "An unexpected error occurred. Please check the log file for details."
-        )
+        # Lazy import messagebox to prevent creating phantom Tk windows
+        from tkinter import messagebox
+        try:
+            messagebox.showerror(
+                "Fatal Error",
+                "An unexpected error occurred. Please check the log file for details."
+            )
+        except:
+            pass  # Fail silently if messagebox can't be shown
         sys.exit(1)
 
 if __name__ == "__main__":
