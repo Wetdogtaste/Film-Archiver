@@ -14,7 +14,7 @@ if [ ! -d "dist/Film Archiver.app" ]; then
 fi
 
 # Set version
-VERSION="1.1.0"
+VERSION="1.2.0"
 DMG_NAME="Film_Archiver_v${VERSION}.dmg"
 
 echo "Creating DMG file: ${DMG_NAME}"

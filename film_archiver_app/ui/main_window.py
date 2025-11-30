@@ -898,7 +898,9 @@ class FilmArchiverWindow:
                     sign = "+" if push_pull > 0 else ""
                     suffix = f"({sign}{push_pull})"
                 
-                return f"{roll_num:03d}-{idx:02d}-{camera}-{film}{suffix}{ext}"
+                # Dynamic padding - minimum 3 digits, expands for larger archives
+                roll_digits = max(len(str(roll_num)), 3)
+                return f"{roll_num:0{roll_digits}d}-{idx:02d}-{camera}-{film}{suffix}{ext}"
                 
         except (ValueError, IndexError):
             pass
@@ -1382,8 +1384,9 @@ class FilmArchiverWindow:
                 sign = "+" if push_pull > 0 else ""
                 suffix = f"({sign}{push_pull})"
             
-            # Create new folder name
-            new_folder = f"{roll_num:03d}-{camera}-{film}{suffix}-{selected_date.strftime('%b%y').upper()}"
+            # Create new folder name with dynamic padding
+            roll_digits = max(len(str(roll_num)), 3)
+            new_folder = f"{roll_num:0{roll_digits}d}-{camera}-{film}{suffix}-{selected_date.strftime('%b%y').upper()}"
             output_path = os.path.join(output_dir, new_folder)
             
             # Create output directory
@@ -1430,7 +1433,8 @@ class FilmArchiverWindow:
                         sign = "+" if push_pull > 0 else ""
                         suffix = f"({sign}{push_pull})"
                     
-                    new_name = f"{roll_num:03d}-{idx:02d}-{camera}-{film}{suffix}{ext}"
+                    # Dynamic padding for file naming
+                    new_name = f"{roll_num:0{roll_digits}d}-{idx:02d}-{camera}-{film}{suffix}{ext}"
                     new_path = os.path.join(output_path, new_name)
                     
                     # Copy file and update date

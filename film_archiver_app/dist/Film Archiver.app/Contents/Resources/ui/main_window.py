@@ -11,6 +11,7 @@ from tkcalendar import Calendar
 import shutil
 import piexif
 import sys
+import subprocess
 
 from core.file_manager import FileManager
 from core.preferences import PreferenceManager
@@ -18,6 +19,27 @@ from config.settings import (
     APP_NAME, IS_MACOS, LIGHT_THEME, DARK_THEME,
     MAX_THUMBNAIL_SIZE, MAX_CACHE_ENTRIES
 )
+
+# Try to import TkinterDnD for drag and drop support
+try:
+    from tkinterdnd2 import DND_FILES
+    USE_TKDND = True
+except ImportError:
+    USE_TKDND = False
+
+# macOS native drag and drop support using PyObjC
+USE_MACOS_DND = False
+if IS_MACOS:
+    try:
+        from AppKit import (
+            NSView, NSFilenamesPboardType,
+            NSDragOperationCopy, NSDragOperationNone
+        )
+        from Foundation import NSObject
+        import objc
+        USE_MACOS_DND = True
+    except ImportError:
+        pass
 
 class FilmArchiverWindow:
     def validate_combobox_input(self, event):
@@ -43,6 +65,25 @@ class FilmArchiverWindow:
             else:
                 # Reset to default color
                 combobox.configure(foreground="")  # Default color
+                
+    def validate_lens_input(self, event):
+        """Validate lens input without auto-capitalizing (allows mixed case)"""
+        # Get the combobox that triggered the event
+        combobox = event.widget
+        current_text = combobox.get()
+        
+        if current_text:
+            # Check for illegal characters (no auto-capitalize for lens)
+            illegal_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
+            is_valid = not any(char in current_text for char in illegal_chars)
+            
+            # Visual feedback
+            if not is_valid:
+                # Set text color to red for invalid input
+                combobox.configure(foreground="red")
+            else:
+                # Reset to default color
+                combobox.configure(foreground="")  # Default color
 
     def __init__(self, root):
         self.root = root
@@ -57,18 +98,60 @@ class FilmArchiverWindow:
         # Initialize variables
         self.files = []
         self.thumbnail_cache = {}
-        self.colors = LIGHT_THEME if not IS_MACOS else DARK_THEME
         self.file_lenses = {}  # Dictionary to store lens for each file
         self.active_combo = None  # Track active combobox
         self.dropdown_active = False  # Flag to prevent immediate reopening
         self.last_dropdown_time = 0  # Track when dropdown was last closed
+        self.drop_highlight_active = False  # Track drag and drop highlight state
+        
+        # Detect system dark mode and set initial theme
+        self.is_dark_mode = self._detect_system_dark_mode()
+        self.colors = DARK_THEME if self.is_dark_mode else LIGHT_THEME
         
         # Configure styles
-        style = ttk.Style()
-        style.configure("Dropdown.TFrame", relief="solid", borderwidth=1)
+        self.style = ttk.Style()
+        self.style.configure("Dropdown.TFrame", relief="solid", borderwidth=1)
         
         # Create UI
         self.create_main_layout()
+        
+        # Apply initial theme
+        self.apply_theme()
+        
+        # Start monitoring for OS theme changes
+        self._start_theme_monitor()
+    
+    def _detect_system_dark_mode(self):
+        """Detect if macOS is in dark mode"""
+        if IS_MACOS:
+            try:
+                result = subprocess.run(
+                    ['defaults', 'read', '-g', 'AppleInterfaceStyle'],
+                    capture_output=True,
+                    text=True
+                )
+                return result.stdout.strip().lower() == 'dark'
+            except Exception:
+                pass
+        return False
+    
+    def _start_theme_monitor(self):
+        """Start periodic monitoring for OS theme changes"""
+        self._check_theme_change()
+    
+    def _check_theme_change(self):
+        """Check if the OS theme has changed and update accordingly"""
+        current_dark_mode = self._detect_system_dark_mode()
+        if current_dark_mode != self.is_dark_mode:
+            self.is_dark_mode = current_dark_mode
+            self.colors = DARK_THEME if self.is_dark_mode else LIGHT_THEME
+            self.apply_theme()
+            # Re-apply theme to file list if files are present
+            if self.files:
+                self.update_file_list()
+        
+        # Check again in 1 second
+        self.root.after(1000, self._check_theme_change)
         
     def create_main_layout(self):
         """Create the main application layout"""
@@ -76,7 +159,7 @@ class FilmArchiverWindow:
         self.main_container = ttk.Frame(self.root)
         self.main_container.pack(fill='both', expand=True)
         
-        # Create UI sections
+        # Create UI sections (no header toggle - using OS theme detection)
         self.create_input_frame()
         
         # Create preview and file list container
@@ -84,6 +167,7 @@ class FilmArchiverWindow:
         preview_container.pack(fill='both', expand=True, padx=10, pady=5)
         
         # Configure grid weights for preview container
+        preview_container.grid_columnconfigure(0, minsize=350)  # Fixed width for preview column
         preview_container.grid_columnconfigure(1, weight=1)
         preview_container.grid_rowconfigure(0, weight=1)
         
@@ -95,11 +179,72 @@ class FilmArchiverWindow:
         
         # Create control frame
         self.create_control_frame()
+    
+    def apply_theme(self):
+        """Apply the current theme to the application - matches macOS Finder styling"""
+        colors = self.colors
+        
+        # Configure the root window background
+        self.root.configure(bg=colors['bg'])
+        
+        # Configure ttk styles for the current theme
+        self.style.configure('TFrame', background=colors['bg'])
+        self.style.configure('TLabel', background=colors['bg'], foreground=colors['fg'])
+        self.style.configure('TLabelframe', background=colors['bg'], foreground=colors['fg'])
+        self.style.configure('TLabelframe.Label', background=colors['bg'], foreground=colors['fg'])
+        self.style.configure('TButton', background=colors['button'])
+        self.style.configure('TEntry', fieldbackground=colors['entry_bg'], foreground=colors['fg'])
+        self.style.configure('TCombobox', fieldbackground=colors['entry_bg'], foreground=colors['fg'])
+        self.style.configure('TCheckbutton', background=colors['bg'], foreground=colors['fg'])
+        
+        # Configure Treeview with macOS Finder-like styling
+        # Use list_bg for the main background to match Finder's dark file list
+        list_bg = colors.get('list_bg', colors['entry_bg'])
+        
+        self.style.configure('Treeview', 
+                           background=list_bg,
+                           foreground=colors['fg'],
+                           fieldbackground=list_bg,
+                           borderwidth=0,
+                           relief='flat')
+        self.style.configure('Treeview.Heading',
+                           background=colors['button'],
+                           foreground=colors['fg'])
+        
+        # macOS blue selection color
+        self.style.map('Treeview',
+                      background=[('selected', colors['select_bg'])],
+                      foreground=[('selected', colors['select_fg'])])
+        
+        # Configure tooltip style
+        self.style.configure('Tooltip.TLabel',
+                           background=colors['tooltip_bg'],
+                           foreground=colors['tooltip_fg'])
+        
+        # Configure scrollbar style for dark mode
+        if self.is_dark_mode:
+            self.style.configure('TScrollbar', 
+                               background=colors['bg'],
+                               troughcolor=colors['list_bg'],
+                               borderwidth=0)
+        
+        # Update the lens cell tag colors for the file list
+        if hasattr(self, 'file_list'):
+            if self.is_dark_mode:
+                # Dark mode: use the list background, no white borders
+                self.file_list.tag_configure("lens_cell", 
+                                            background=colors['button'], 
+                                            foreground=colors['fg'])
+            else:
+                # Light mode styling
+                self.file_list.tag_configure("lens_cell", 
+                                            background="#e8e8e8", 
+                                            foreground="#000000")
         
     def create_input_frame(self):
         """Create the input controls section"""
         input_frame = ttk.LabelFrame(self.main_container, text="Settings", padding="10")
-        input_frame.pack(fill="x", padx=10, pady=5)
+        input_frame.pack(fill="x", padx=10, pady=(10, 5))
         
         # Roll Number
         roll_frame = ttk.Frame(input_frame)
@@ -226,8 +371,8 @@ class FilmArchiverWindow:
         self.lens_model = ttk.Combobox(lens_frame, width=30)
         self.lens_model.pack(side='left', padx=5)
         self.lens_model['values'] = self.pref_manager.get_lenses()
-        self.lens_model.bind('<<ComboboxSelected>>', lambda e: (self.validate_combobox_input(e), self.update_file_list()))
-        self.lens_model.bind('<KeyRelease>', lambda e: (self.validate_combobox_input(e), self.update_file_list()))
+        self.lens_model.bind('<<ComboboxSelected>>', lambda e: (self.validate_lens_input(e), self.update_file_list()))
+        self.lens_model.bind('<KeyRelease>', lambda e: (self.validate_lens_input(e), self.update_file_list()))
         
         lens_buttons = ttk.Frame(lens_frame)
         lens_buttons.pack(side='left')
@@ -282,10 +427,9 @@ class FilmArchiverWindow:
         preview_frame = ttk.LabelFrame(parent, text="Preview", padding="10")
         preview_frame.grid(row=0, column=0, padx=(0, 5), sticky="nsew")
         
-        # Set minimum width for preview
-        preview_frame.update()
+        # Set fixed size for preview area (visible even without image)
         preview_frame.grid_propagate(False)
-        preview_frame.configure(width=350)
+        preview_frame.configure(width=350, height=350)
         
         self.preview_label = ttk.Label(preview_frame)
         self.preview_label.pack(expand=True)
@@ -339,6 +483,158 @@ class FilmArchiverWindow:
         self.file_list.bind('<ButtonPress-1>', self.on_file_list_press)
         self.file_list.bind('<ButtonRelease-1>', self.on_file_list_click)
         
+        # Bind delete key to remove selected files
+        self.file_list.bind('<Delete>', self.delete_selected_files)
+        self.file_list.bind('<BackSpace>', self.delete_selected_files)
+        
+        # Store reference to list_frame for drop zone visual feedback
+        self.list_frame = list_frame
+        
+        # Set up drag and drop if available
+        if USE_TKDND:
+            self.setup_drag_drop(list_frame)
+        
+    def setup_drag_drop(self, drop_target):
+        """Set up drag and drop functionality on the file list area"""
+        try:
+            # Register the drop target to accept files
+            drop_target.drop_target_register(DND_FILES)
+            
+            # Bind drag and drop events
+            drop_target.dnd_bind('<<DropEnter>>', self.on_drag_enter)
+            drop_target.dnd_bind('<<DropLeave>>', self.on_drag_leave)
+            drop_target.dnd_bind('<<Drop>>', self.on_drop)
+            
+            # Also register the file list itself
+            self.file_list.drop_target_register(DND_FILES)
+            self.file_list.dnd_bind('<<DropEnter>>', self.on_drag_enter)
+            self.file_list.dnd_bind('<<DropLeave>>', self.on_drag_leave)
+            self.file_list.dnd_bind('<<Drop>>', self.on_drop)
+            
+            logging.info("Drag and drop enabled for file list")
+        except Exception as e:
+            logging.warning(f"Failed to setup drag and drop: {e}")
+    
+    def on_drag_enter(self, event):
+        """Handle drag enter event - show visual feedback"""
+        if not self.drop_highlight_active:
+            self.drop_highlight_active = True
+            self.show_drop_highlight()
+        return event.action
+    
+    def on_drag_leave(self, event):
+        """Handle drag leave event - hide visual feedback"""
+        if self.drop_highlight_active:
+            self.drop_highlight_active = False
+            self.hide_drop_highlight()
+        return event.action
+    
+    def on_drop(self, event):
+        """Handle drop event - process dropped files/folders"""
+        # Hide the drop highlight
+        self.drop_highlight_active = False
+        self.hide_drop_highlight()
+        
+        # Parse the dropped data
+        # TkinterDnD returns paths as a string, with spaces in paths wrapped in {}
+        dropped_data = event.data
+        
+        # Parse the file paths
+        paths = self.parse_dropped_paths(dropped_data)
+        
+        if not paths:
+            return event.action
+        
+        # Process the dropped paths (files and folders)
+        new_files = self.file_manager.process_dropped_paths(paths)
+        
+        if new_files:
+            # Add new files and update display
+            self.files.extend(new_files)
+            self.update_file_list()
+            
+            # Select first file
+            if self.file_list.get_children():
+                first_item = self.file_list.get_children()[0]
+                self.file_list.selection_set(first_item)
+                self.on_file_select()
+        
+        return event.action
+    
+    def parse_dropped_paths(self, data):
+        """Parse dropped file paths from TkinterDnD data string"""
+        paths = []
+        
+        # TkinterDnD wraps paths with spaces in curly braces
+        # e.g., "{/path/to/my file.jpg} /path/to/another.jpg"
+        i = 0
+        while i < len(data):
+            if data[i] == '{':
+                # Find closing brace
+                end = data.find('}', i)
+                if end != -1:
+                    path = data[i+1:end]
+                    paths.append(path)
+                    i = end + 1
+                else:
+                    break
+            elif data[i] == ' ':
+                i += 1
+            else:
+                # Find next space or end
+                end = data.find(' ', i)
+                if end == -1:
+                    end = len(data)
+                path = data[i:end]
+                if path:
+                    paths.append(path)
+                i = end + 1
+        
+        return paths
+    
+    def show_drop_highlight(self):
+        """Show visual feedback when dragging over the drop zone"""
+        colors = self.colors
+        
+        # Create overlay frame if it doesn't exist
+        if not hasattr(self, 'drop_overlay') or self.drop_overlay is None:
+            # Create a frame overlay for the drop zone
+            self.drop_overlay = tk.Frame(
+                self.list_frame,
+                bg=colors['select_bg'],  # macOS blue
+                highlightbackground=colors['select_bg'],
+                highlightcolor=colors['select_bg'],
+                highlightthickness=3
+            )
+            
+            # Create inner frame with semi-transparent effect
+            inner_bg = '#1E1E1E' if self.is_dark_mode else '#FFFFFF'
+            self.drop_inner = tk.Frame(
+                self.drop_overlay,
+                bg=inner_bg
+            )
+            self.drop_inner.pack(fill='both', expand=True, padx=3, pady=3)
+            
+            # Add drop indicator label
+            label_fg = '#FFFFFF' if self.is_dark_mode else '#000000'
+            self.drop_label = tk.Label(
+                self.drop_inner,
+                text="📂  Drop files or folders here",
+                font=('SF Pro Display', 14),
+                fg=label_fg,
+                bg=inner_bg
+            )
+            self.drop_label.pack(expand=True)
+        
+        # Position the overlay over the file list
+        self.drop_overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.drop_overlay.lift()
+    
+    def hide_drop_highlight(self):
+        """Hide the drop zone visual feedback"""
+        if hasattr(self, 'drop_overlay') and self.drop_overlay is not None:
+            self.drop_overlay.place_forget()
+        
     def create_control_frame(self):
         """Create the control buttons section"""
         # Progress bar container
@@ -384,9 +680,9 @@ class FilmArchiverWindow:
         
         def enter(event):
             nonlocal tooltip
-            x, y, _, _ = widget.bbox("insert")
-            x += widget.winfo_rootx() + 25
-            y += widget.winfo_rooty() + 20
+            # Fixed position: to the right and below the widget (no cursor jitter)
+            x = widget.winfo_rootx() + 25
+            y = widget.winfo_rooty() + widget.winfo_height() + 5
             
             tooltip = tk.Toplevel(widget)
             tooltip.wm_overrideredirect(True)
@@ -436,21 +732,21 @@ class FilmArchiverWindow:
             
     def add_lens_to_list(self):
         """Add current lens to saved list"""
-        lens = self.lens_model.get().strip().upper()
+        lens = self.lens_model.get().strip()
         if lens:
             self.pref_manager.add_lens(lens)
             self.lens_model['values'] = self.pref_manager.get_lenses()
 
     def remove_lens_from_list(self):
         """Remove current lens from saved list"""
-        lens = self.lens_model.get().strip().upper()
+        lens = self.lens_model.get().strip()
         if lens:
             self.pref_manager.remove_lens(lens)
             self.lens_model['values'] = self.pref_manager.get_lenses()
             
     def apply_lens_to_all(self):
         """Apply the current global lens to all files"""
-        lens = self.lens_model.get().strip().upper()
+        lens = self.lens_model.get().strip()
         if lens and self.files:
             # Clear all per-file lens settings
             self.file_lenses.clear()
@@ -534,13 +830,26 @@ class FilmArchiverWindow:
         for item in self.file_list.get_children():
             self.file_list.delete(item)
             
+        # Configure lens cell tag colors based on current theme
+        colors = self.colors
+        if self.is_dark_mode:
+            # Dark mode: use button color for lens cells (slightly lighter than list bg)
+            self.file_list.tag_configure("lens_cell", 
+                                        background=colors['button'], 
+                                        foreground=colors['fg'])
+        else:
+            # Light mode styling
+            self.file_list.tag_configure("lens_cell", 
+                                        background="#e8e8e8", 
+                                        foreground="#000000")
+            
         # Add files to list
         files_to_show = self.files.copy()
         if self.reverse_var.get():
             files_to_show.reverse()
             
-        # Get global lens value
-        global_lens = self.lens_model.get().strip().upper()
+        # Get global lens value (preserve case for lens)
+        global_lens = self.lens_model.get().strip()
             
         for file in files_to_show:
             filename = os.path.basename(file)
@@ -559,9 +868,6 @@ class FilmArchiverWindow:
             item_id = self.file_list.insert("", "end", values=(
                 filename, original_date, new_name, new_date, lens_display
             ))
-            
-            # Style the lens cell to indicate it's clickable with a border
-            self.file_list.tag_configure("lens_cell", background="#e8e8e8", foreground="#000000")
             
             # Apply the tag to the item
             self.file_list.item(item_id, tags=("lens_cell",))
@@ -592,7 +898,9 @@ class FilmArchiverWindow:
                     sign = "+" if push_pull > 0 else ""
                     suffix = f"({sign}{push_pull})"
                 
-                return f"{roll_num:03d}-{idx:02d}-{camera}-{film}{suffix}{ext}"
+                # Dynamic padding - minimum 3 digits, expands for larger archives
+                roll_digits = max(len(str(roll_num)), 3)
+                return f"{roll_num:0{roll_digits}d}-{idx:02d}-{camera}-{film}{suffix}{ext}"
                 
         except (ValueError, IndexError):
             pass
@@ -647,36 +955,112 @@ class FilmArchiverWindow:
     def show_calendar(self):
         """Show date picker calendar"""
         top = tk.Toplevel(self.root)
-        top.title("Select Date")
-        top.transient(self.root)
+        top.overrideredirect(True)  # Remove window decorations (no stoplight buttons)
+        top.configure(background='white')
+        
+        # Add a thin border frame to make the popup visually distinct
+        border_frame = tk.Frame(top, background='#cccccc', padx=1, pady=1)
+        border_frame.pack(fill='both', expand=True)
+        
+        inner_frame = tk.Frame(border_frame, background='white')
+        inner_frame.pack(fill='both', expand=True)
+        
+        # Configure ttk styles for the calendar's month/year header
+        cal_style = ttk.Style(top)
+        cal_style.configure('TLabel', foreground='black', background='white')
+        cal_style.configure('TButton', foreground='black')
         
         # Create calendar with fixed configuration
-        cal = Calendar(top, 
+        cal = Calendar(inner_frame, 
                       selectmode='day', 
                       date_pattern='mm/dd/y',
                       showweeknumbers=False,  # Remove the extra column
-                      firstweekday='sunday'   # Start week on Sunday
+                      firstweekday='sunday',  # Start week on Sunday
+                      foreground='black',  # Main text color
+                      background='white',  # Main background
+                      headersforeground='black',  # Day name headers text color
+                      headersbackground='#f0f0f0',  # Day name headers background
+                      normalforeground='black',  # Normal day text color
+                      normalbackground='white',  # Normal day background
+                      weekendforeground='#555555',  # Weekend text color
+                      weekendbackground='white',  # Weekend background
+                      bordercolor='#cccccc'  # Border color
                      )
         cal.pack(padx=10, pady=10)
+        
+        # Try to directly configure the header label's foreground color
+        try:
+            # Access the internal header frame and configure text color
+            for widget in cal.winfo_children():
+                if hasattr(widget, 'winfo_children'):
+                    for child in widget.winfo_children():
+                        if isinstance(child, ttk.Label):
+                            child.configure(foreground='black')
+        except:
+            pass
+        
+        # Track the click-outside binding ID for cleanup
+        click_outside_id = None
+        
+        def cleanup_and_close():
+            """Clean up bindings and close the calendar"""
+            nonlocal click_outside_id
+            if click_outside_id:
+                try:
+                    self.root.unbind('<Button-1>', click_outside_id)
+                except:
+                    pass
+            top.destroy()
         
         def set_date():
             self.date_entry.delete(0, tk.END)
             self.date_entry.insert(0, cal.get_date())
             self.update_file_list()
-            top.destroy()
+            cleanup_and_close()
         
-        def on_click_outside(event=None):
-            if event.widget == top:
-                top.destroy()
+        def on_click_outside(event):
+            """Close calendar when clicking outside of it"""
+            # Check if the click is outside the calendar window
+            try:
+                # Get the widget that was clicked
+                clicked_widget = event.widget
+                
+                # Check if click is on the calendar window or its children
+                if clicked_widget == top or str(clicked_widget).startswith(str(top)):
+                    return
+                
+                # Check if click is within calendar bounds
+                cal_x = top.winfo_rootx()
+                cal_y = top.winfo_rooty()
+                cal_width = top.winfo_width()
+                cal_height = top.winfo_height()
+                
+                if (cal_x <= event.x_root <= cal_x + cal_width and
+                    cal_y <= event.y_root <= cal_y + cal_height):
+                    return
+                
+                # Click was outside, close the calendar
+                cleanup_and_close()
+            except:
+                pass
         
-        # Bind events
-        top.bind('<FocusOut>', on_click_outside)
+        # Bind date selection event (calendar closes when date is selected)
         cal.bind('<<CalendarSelected>>', lambda e: set_date())
         
         # Position calendar near date entry
         x = self.date_entry.winfo_rootx() + 10
         y = self.date_entry.winfo_rooty() + self.date_entry.winfo_height() + 10
         top.geometry(f"+{x}+{y}")
+        
+        # Update to get proper dimensions before binding click handler
+        top.update_idletasks()
+        
+        # Bind click-outside handler after a short delay to prevent immediate closing
+        def bind_click_outside():
+            nonlocal click_outside_id
+            click_outside_id = self.root.bind('<Button-1>', on_click_outside, add='+')
+        
+        top.after(100, bind_click_outside)
         
         # Make window float on top
         top.lift()
@@ -781,8 +1165,8 @@ class FilmArchiverWindow:
         # Get cell coordinates
         x, y, width, height = self.file_list.bbox(item_id, column)
         
-        # Get current lens value (from per-file setting or global)
-        current_lens = self.file_lenses.get(file_path, self.lens_model.get().strip().upper())
+        # Get current lens value (from per-file setting or global, preserve case)
+        current_lens = self.file_lenses.get(file_path, self.lens_model.get().strip())
         
         # Get all lens values
         lens_values = self.pref_manager.get_lenses()
@@ -847,6 +1231,9 @@ class FilmArchiverWindow:
             self.last_dropdown_time = datetime.now().timestamp()
             self.dropdown_active = False
             
+            # Restore focus to the main window so input fields work
+            self.root.focus_force()
+            
             # Stop event propagation
             if event:
                 return "break"
@@ -895,12 +1282,55 @@ class FilmArchiverWindow:
                 # Set timestamp to prevent immediate reopening
                 self.last_dropdown_time = datetime.now().timestamp()
                 self.dropdown_active = False
+                
+                # Restore focus to the main window so input fields work
+                self.root.focus_force()
         
         on_click_outside_id = self.root.bind("<Button-1>", on_click_outside, add="+")
         
         # Ensure dropdown is on top
         dropdown.lift()
         dropdown.focus_set()
+    
+    def delete_selected_files(self, event=None):
+        """Delete selected files from the list (not from disk)"""
+        selection = self.file_list.selection()
+        if not selection:
+            return
+        
+        # Get filenames of selected items
+        files_to_remove = []
+        for item_id in selection:
+            item_values = self.file_list.item(item_id, 'values')
+            if item_values:
+                filename = item_values[0]
+                # Find the full path matching this filename
+                for file in self.files:
+                    if os.path.basename(file) == filename:
+                        files_to_remove.append(file)
+                        break
+        
+        # Remove files from the list
+        for file_path in files_to_remove:
+            if file_path in self.files:
+                self.files.remove(file_path)
+            # Clean up associated data
+            if file_path in self.file_lenses:
+                del self.file_lenses[file_path]
+            if file_path in self.thumbnail_cache:
+                del self.thumbnail_cache[file_path]
+        
+        # Update the file list display
+        self.update_file_list()
+        
+        # Clear preview if no files left, or select first remaining file
+        if not self.files:
+            self.update_preview(None)
+        elif self.file_list.get_children():
+            first_item = self.file_list.get_children()[0]
+            self.file_list.selection_set(first_item)
+            self.file_list.focus(first_item)
+            self.on_file_select()
     
     def clear_files(self):
         """Clear all files"""
@@ -954,8 +1384,9 @@ class FilmArchiverWindow:
                 sign = "+" if push_pull > 0 else ""
                 suffix = f"({sign}{push_pull})"
             
-            # Create new folder name
-            new_folder = f"{roll_num:03d}-{camera}-{film}{suffix}-{selected_date.strftime('%b%y').upper()}"
+            # Create new folder name with dynamic padding
+            roll_digits = max(len(str(roll_num)), 3)
+            new_folder = f"{roll_num:0{roll_digits}d}-{camera}-{film}{suffix}-{selected_date.strftime('%b%y').upper()}"
             output_path = os.path.join(output_dir, new_folder)
             
             # Create output directory
@@ -1002,7 +1433,8 @@ class FilmArchiverWindow:
                         sign = "+" if push_pull > 0 else ""
                         suffix = f"({sign}{push_pull})"
                     
-                    new_name = f"{roll_num:03d}-{idx:02d}-{camera}-{film}{suffix}{ext}"
+                    # Dynamic padding for file naming
+                    new_name = f"{roll_num:0{roll_digits}d}-{idx:02d}-{camera}-{film}{suffix}{ext}"
                     new_path = os.path.join(output_path, new_name)
                     
                     # Copy file and update date
@@ -1019,8 +1451,8 @@ class FilmArchiverWindow:
                             exif_dict['Exif'][piexif.ExifIFD.DateTimeOriginal] = date_str.encode()
                             exif_dict['Exif'][piexif.ExifIFD.DateTimeDigitized] = date_str.encode()
                             
-                            # Add lens information if available
-                            lens = self.file_lenses.get(file, self.lens_model.get().strip().upper())
+                            # Add lens information if available (preserve case)
+                            lens = self.file_lenses.get(file, self.lens_model.get().strip())
                             if lens:
                                 # Set lens model in EXIF
                                 exif_dict['Exif'][piexif.ExifIFD.LensModel] = lens.encode()

@@ -1,21 +1,31 @@
 """
 Film Archiver - Configuration Settings
+
+A tool for organizing and renaming film photography scans with metadata support.
+
+Author: Michael Ziebell
+GitHub: https://github.com/Wetdogtaste
+Copyright: 2024-2025 Michael Ziebell
 """
 import os
 import logging
 import sys
 from pathlib import Path
 
+__author__ = "Michael Ziebell"
+__copyright__ = "Copyright 2024-2025, Michael Ziebell"
+__license__ = "MIT"
+
 # Version information
 VERSION_MAJOR = 1
-VERSION_MINOR = 0
+VERSION_MINOR = 2
 VERSION_PATCH = 0
-VERSION_DATE = "2024-02-08"
+VERSION_DATE = "2025-11-30"
 APP_VERSION = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
 
 # Application Constants
 APP_NAME = "Film Archiver"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.2.0"
 
 # Platform-specific settings
 IS_MACOS = sys.platform == 'darwin'

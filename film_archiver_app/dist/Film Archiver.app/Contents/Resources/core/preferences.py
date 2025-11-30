@@ -13,6 +13,7 @@ class PreferenceManager:
         self.cameras = []
         self.films = []
         self.lenses = []  # Add lenses list
+        self.dark_mode = False  # Theme preference (False = light, True = dark)
         self.preferences_file = APP_DIR / "preferences.json"
         self.load_preferences()
     
@@ -25,6 +26,7 @@ class PreferenceManager:
                     self.cameras = prefs.get('cameras', [])
                     self.films = prefs.get('films', [])
                     self.lenses = prefs.get('lenses', [])
+                    self.dark_mode = prefs.get('dark_mode', False)
         except Exception as e:
             logger.error(f"Error loading preferences: {e}")
     
@@ -36,7 +38,8 @@ class PreferenceManager:
                 json.dump({
                     'cameras': self.cameras,
                     'films': self.films,
-                    'lenses': self.lenses
+                    'lenses': self.lenses,
+                    'dark_mode': self.dark_mode
                 }, f, indent=2)
         except Exception as e:
             logger.error(f"Error saving preferences: {e}")
@@ -94,3 +97,12 @@ class PreferenceManager:
         if lens in self.lenses:
             self.lenses.remove(lens)
             self.save_preferences()
+    
+    def get_dark_mode(self):
+        """Get dark mode preference"""
+        return self.dark_mode
+    
+    def set_dark_mode(self, enabled):
+        """Set dark mode preference"""
+        self.dark_mode = enabled
+        self.save_preferences()

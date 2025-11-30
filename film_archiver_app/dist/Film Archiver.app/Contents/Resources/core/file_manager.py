@@ -147,3 +147,41 @@ class FileManager:
         except Exception as e:
             self.logger.error(f"Error getting image date for {image_path}: {e}")
             return "Unknown"
+
+    def process_dropped_paths(self, paths: List[str]) -> List[str]:
+        """
+        Process dropped files and folders, returning a list of valid image files.
+        Recursively scans folders for supported image formats.
+        
+        Args:
+            paths: List of file and/or folder paths
+            
+        Returns:
+            List of valid image file paths
+        """
+        valid_files = []
+        
+        for path in paths:
+            try:
+                if os.path.isfile(path):
+                    # Single file - validate and add if supported
+                    if self.validate_file(path):
+                        valid_files.append(path)
+                elif os.path.isdir(path):
+                    # Directory - recursively scan for images
+                    for root, dirs, files in os.walk(path):
+                        # Skip hidden directories
+                        dirs[:] = [d for d in dirs if not d.startswith('.')]
+                        
+                        for filename in sorted(files):
+                            # Skip hidden files
+                            if filename.startswith('.'):
+                                continue
+                                
+                            file_path = os.path.join(root, filename)
+                            if self.validate_file(file_path):
+                                valid_files.append(file_path)
+            except Exception as e:
+                self.logger.error(f"Error processing dropped path {path}: {e}")
+                
+        return valid_files

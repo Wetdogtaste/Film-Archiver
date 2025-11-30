@@ -1,5 +1,5 @@
 ('/Users/michaelziebell/Documents/Develop '
- 'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/build/Film_Archiver/Film '
+ 'Projects/GitHub/Film-Archiver/film_archiver_app/build/Film_Archiver/Film '
  'Archiver',
  True,
  False,
@@ -15,73 +15,69 @@
  None,
  None,
  '/Users/michaelziebell/Documents/Develop '
- 'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/build/Film_Archiver/Film '
+ 'Projects/GitHub/Film-Archiver/film_archiver_app/build/Film_Archiver/Film '
  'Archiver.pkg',
  [('pyi-contents-directory _internal', '', 'OPTION'),
   ('PYZ-00.pyz',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/build/Film_Archiver/PYZ-00.pyz',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/build/Film_Archiver/PYZ-00.pyz',
    'PYZ'),
-  ('lib-dynload/_struct.cpython-313-darwin.so',
+  ('python3.13/lib-dynload/_struct.cpython-313-darwin.so',
    '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/_struct.cpython-313-darwin.so',
    'EXTENSION'),
-  ('lib-dynload/zlib.cpython-313-darwin.so',
+  ('python3.13/lib-dynload/zlib.cpython-313-darwin.so',
    '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/lib/python3.13/lib-dynload/zlib.cpython-313-darwin.so',
    'EXTENSION'),
   ('struct',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/build/Film_Archiver/localpycs/struct.pyc',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/build/Film_Archiver/localpycs/struct.pyc',
    'PYMODULE'),
   ('pyimod01_archive',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/build/Film_Archiver/localpycs/pyimod01_archive.pyc',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/build/Film_Archiver/localpycs/pyimod01_archive.pyc',
    'PYMODULE'),
   ('pyimod02_importers',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/build/Film_Archiver/localpycs/pyimod02_importers.pyc',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/build/Film_Archiver/localpycs/pyimod02_importers.pyc',
    'PYMODULE'),
   ('pyimod03_ctypes',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/build/Film_Archiver/localpycs/pyimod03_ctypes.pyc',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/build/Film_Archiver/localpycs/pyimod03_ctypes.pyc',
    'PYMODULE'),
   ('pyiboot01_bootstrap',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/loader/pyiboot01_bootstrap.py',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/loader/pyiboot01_bootstrap.py',
    'PYSOURCE'),
   ('pyi_rth_inspect',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_inspect.py',
-   'PYSOURCE'),
-  ('pyi_rth_pkgres',
-   '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_pkgres.py',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_inspect.py',
    'PYSOURCE'),
   ('pyi_rth_setuptools',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_setuptools.py',
-   'PYSOURCE'),
-  ('pyi_rth_multiprocessing',
-   '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_multiprocessing.py',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_setuptools.py',
    'PYSOURCE'),
   ('pyi_rth_pkgutil',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_pkgutil.py',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_pkgutil.py',
+   'PYSOURCE'),
+  ('pyi_rth_multiprocessing',
+   '/Users/michaelziebell/Documents/Develop '
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth_multiprocessing.py',
    'PYSOURCE'),
   ('pyi_rth__tkinter',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth__tkinter.py',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/hooks/rthooks/pyi_rth__tkinter.py',
    'PYSOURCE'),
   ('main',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/main.py',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/main.py',
    'PYSOURCE')],
  [],
  False,
  False,
- 1743300019,
+ 1764528891,
  [('run',
    '/Users/michaelziebell/Documents/Develop '
-   'Projects/GitHub/Film-Archiver-V1.0/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/bootloader/Darwin-64bit/run',
+   'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/bootloader/Darwin-64bit/run',
    'EXECUTABLE')],
  '/opt/homebrew/Cellar/python@3.13/3.13.2/Frameworks/Python.framework/Versions/3.13/Python')
