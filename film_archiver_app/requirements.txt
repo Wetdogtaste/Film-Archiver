@@ -159,3 +159,4 @@ pyobjc-framework-Virtualization==11.0
 pyobjc-framework-Vision==11.0
 pyobjc-framework-WebKit==11.0
 tkcalendar==1.6.1
+tkinterdnd2==0.4.2

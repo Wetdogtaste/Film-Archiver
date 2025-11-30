@@ -7,6 +7,13 @@ import logging
 import tkinter as tk
 from tkinter import messagebox
 
+# Try to import TkinterDnD for drag and drop support
+try:
+    from tkinterdnd2 import TkinterDnD
+    USE_DND = True
+except ImportError:
+    USE_DND = False
+
 from config.settings import configure_logging
 from ui.main_window import FilmArchiverWindow
 
@@ -17,8 +24,20 @@ def main():
         configure_logging()
         logger = logging.getLogger(__name__)
         
-        # Create main window
-        root = tk.Tk()
+        # Create main window with drag and drop support if available
+        dnd_enabled = False
+        if USE_DND:
+            try:
+                root = TkinterDnD.Tk()
+                dnd_enabled = True
+                logger.info("TkinterDnD initialized - drag and drop enabled")
+            except RuntimeError as e:
+                # tkdnd native library not found - fall back to regular Tk
+                logger.warning(f"TkinterDnD failed to initialize ({e}) - falling back to standard Tk")
+                root = tk.Tk()
+        else:
+            root = tk.Tk()
+            logger.info("TkinterDnD not installed - drag and drop disabled")
         app = FilmArchiverWindow(root)
         
         # Set up window close handling

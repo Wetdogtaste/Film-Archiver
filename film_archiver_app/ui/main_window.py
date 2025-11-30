@@ -20,6 +20,27 @@ from config.settings import (
     MAX_THUMBNAIL_SIZE, MAX_CACHE_ENTRIES
 )
 
+# Try to import TkinterDnD for drag and drop support
+try:
+    from tkinterdnd2 import DND_FILES
+    USE_TKDND = True
+except ImportError:
+    USE_TKDND = False
+
+# macOS native drag and drop support using PyObjC
+USE_MACOS_DND = False
+if IS_MACOS:
+    try:
+        from AppKit import (
+            NSView, NSFilenamesPboardType,
+            NSDragOperationCopy, NSDragOperationNone
+        )
+        from Foundation import NSObject
+        import objc
+        USE_MACOS_DND = True
+    except ImportError:
+        pass
+
 class FilmArchiverWindow:
     def validate_combobox_input(self, event):
         """Validate and auto-capitalize combobox input"""
@@ -81,6 +102,7 @@ class FilmArchiverWindow:
         self.active_combo = None  # Track active combobox
         self.dropdown_active = False  # Flag to prevent immediate reopening
         self.last_dropdown_time = 0  # Track when dropdown was last closed
+        self.drop_highlight_active = False  # Track drag and drop highlight state
         
         # Detect system dark mode and set initial theme
         self.is_dark_mode = self._detect_system_dark_mode()
@@ -460,6 +482,158 @@ class FilmArchiverWindow:
         # Bind click events for lens column dropdown
         self.file_list.bind('<ButtonPress-1>', self.on_file_list_press)
         self.file_list.bind('<ButtonRelease-1>', self.on_file_list_click)
+        
+        # Bind delete key to remove selected files
+        self.file_list.bind('<Delete>', self.delete_selected_files)
+        self.file_list.bind('<BackSpace>', self.delete_selected_files)
+        
+        # Store reference to list_frame for drop zone visual feedback
+        self.list_frame = list_frame
+        
+        # Set up drag and drop if available
+        if USE_TKDND:
+            self.setup_drag_drop(list_frame)
+        
+    def setup_drag_drop(self, drop_target):
+        """Set up drag and drop functionality on the file list area"""
+        try:
+            # Register the drop target to accept files
+            drop_target.drop_target_register(DND_FILES)
+            
+            # Bind drag and drop events
+            drop_target.dnd_bind('<<DropEnter>>', self.on_drag_enter)
+            drop_target.dnd_bind('<<DropLeave>>', self.on_drag_leave)
+            drop_target.dnd_bind('<<Drop>>', self.on_drop)
+            
+            # Also register the file list itself
+            self.file_list.drop_target_register(DND_FILES)
+            self.file_list.dnd_bind('<<DropEnter>>', self.on_drag_enter)
+            self.file_list.dnd_bind('<<DropLeave>>', self.on_drag_leave)
+            self.file_list.dnd_bind('<<Drop>>', self.on_drop)
+            
+            logging.info("Drag and drop enabled for file list")
+        except Exception as e:
+            logging.warning(f"Failed to setup drag and drop: {e}")
+    
+    def on_drag_enter(self, event):
+        """Handle drag enter event - show visual feedback"""
+        if not self.drop_highlight_active:
+            self.drop_highlight_active = True
+            self.show_drop_highlight()
+        return event.action
+    
+    def on_drag_leave(self, event):
+        """Handle drag leave event - hide visual feedback"""
+        if self.drop_highlight_active:
+            self.drop_highlight_active = False
+            self.hide_drop_highlight()
+        return event.action
+    
+    def on_drop(self, event):
+        """Handle drop event - process dropped files/folders"""
+        # Hide the drop highlight
+        self.drop_highlight_active = False
+        self.hide_drop_highlight()
+        
+        # Parse the dropped data
+        # TkinterDnD returns paths as a string, with spaces in paths wrapped in {}
+        dropped_data = event.data
+        
+        # Parse the file paths
+        paths = self.parse_dropped_paths(dropped_data)
+        
+        if not paths:
+            return event.action
+        
+        # Process the dropped paths (files and folders)
+        new_files = self.file_manager.process_dropped_paths(paths)
+        
+        if new_files:
+            # Add new files and update display
+            self.files.extend(new_files)
+            self.update_file_list()
+            
+            # Select first file
+            if self.file_list.get_children():
+                first_item = self.file_list.get_children()[0]
+                self.file_list.selection_set(first_item)
+                self.on_file_select()
+        
+        return event.action
+    
+    def parse_dropped_paths(self, data):
+        """Parse dropped file paths from TkinterDnD data string"""
+        paths = []
+        
+        # TkinterDnD wraps paths with spaces in curly braces
+        # e.g., "{/path/to/my file.jpg} /path/to/another.jpg"
+        i = 0
+        while i < len(data):
+            if data[i] == '{':
+                # Find closing brace
+                end = data.find('}', i)
+                if end != -1:
+                    path = data[i+1:end]
+                    paths.append(path)
+                    i = end + 1
+                else:
+                    break
+            elif data[i] == ' ':
+                i += 1
+            else:
+                # Find next space or end
+                end = data.find(' ', i)
+                if end == -1:
+                    end = len(data)
+                path = data[i:end]
+                if path:
+                    paths.append(path)
+                i = end + 1
+        
+        return paths
+    
+    def show_drop_highlight(self):
+        """Show visual feedback when dragging over the drop zone"""
+        colors = self.colors
+        
+        # Create overlay frame if it doesn't exist
+        if not hasattr(self, 'drop_overlay') or self.drop_overlay is None:
+            # Create a frame overlay for the drop zone
+            self.drop_overlay = tk.Frame(
+                self.list_frame,
+                bg=colors['select_bg'],  # macOS blue
+                highlightbackground=colors['select_bg'],
+                highlightcolor=colors['select_bg'],
+                highlightthickness=3
+            )
+            
+            # Create inner frame with semi-transparent effect
+            inner_bg = '#1E1E1E' if self.is_dark_mode else '#FFFFFF'
+            self.drop_inner = tk.Frame(
+                self.drop_overlay,
+                bg=inner_bg
+            )
+            self.drop_inner.pack(fill='both', expand=True, padx=3, pady=3)
+            
+            # Add drop indicator label
+            label_fg = '#FFFFFF' if self.is_dark_mode else '#000000'
+            self.drop_label = tk.Label(
+                self.drop_inner,
+                text="📂  Drop files or folders here",
+                font=('SF Pro Display', 14),
+                fg=label_fg,
+                bg=inner_bg
+            )
+            self.drop_label.pack(expand=True)
+        
+        # Position the overlay over the file list
+        self.drop_overlay.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.drop_overlay.lift()
+    
+    def hide_drop_highlight(self):
+        """Hide the drop zone visual feedback"""
+        if hasattr(self, 'drop_overlay') and self.drop_overlay is not None:
+            self.drop_overlay.place_forget()
         
     def create_control_frame(self):
         """Create the control buttons section"""
@@ -1115,6 +1289,46 @@ class FilmArchiverWindow:
         # Ensure dropdown is on top
         dropdown.lift()
         dropdown.focus_set()
+    
+    def delete_selected_files(self, event=None):
+        """Delete selected files from the list (not from disk)"""
+        selection = self.file_list.selection()
+        if not selection:
+            return
+        
+        # Get filenames of selected items
+        files_to_remove = []
+        for item_id in selection:
+            item_values = self.file_list.item(item_id, 'values')
+            if item_values:
+                filename = item_values[0]
+                # Find the full path matching this filename
+                for file in self.files:
+                    if os.path.basename(file) == filename:
+                        files_to_remove.append(file)
+                        break
+        
+        # Remove files from the list
+        for file_path in files_to_remove:
+            if file_path in self.files:
+                self.files.remove(file_path)
+            # Clean up associated data
+            if file_path in self.file_lenses:
+                del self.file_lenses[file_path]
+            if file_path in self.thumbnail_cache:
+                del self.thumbnail_cache[file_path]
+        
+        # Update the file list display
+        self.update_file_list()
+        
+        # Clear preview if no files left, or select first remaining file
+        if not self.files:
+            self.update_preview(None)
+        elif self.file_list.get_children():
+            first_item = self.file_list.get_children()[0]
+            self.file_list.selection_set(first_item)
+            self.file_list.focus(first_item)
+            self.on_file_select()
     
     def clear_files(self):
         """Clear all files"""
