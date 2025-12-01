@@ -25,7 +25,7 @@ EXIF metadata embedded in each file enables seamless integration with photo mana
 
 ## Recommended Folder Structure
 
-Set up a master archive folder organized by year:
+Set up a master archive folder with subfolders organized by year:
 
 ```
 Film Archive/
@@ -149,7 +149,6 @@ The roll number is your **universal catalog ID** linking digital files to physic
 
 ## Features
 
-- **Drag & drop** or browse to add scanned images
 - **Image preview** with thumbnail caching
 - **Favorites** for cameras, films, and lenses
 - **Per-file lens assignment** for rolls shot with multiple lenses
