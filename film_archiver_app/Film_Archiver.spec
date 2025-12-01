@@ -76,6 +76,23 @@ datas.extend([
     ('utils', 'utils')
 ])
 
+# Include documentation files
+docs_dir = os.path.dirname(spec_dir)  # Parent directory (repository root)
+readme_path = os.path.join(docs_dir, 'README.md')
+manual_path = os.path.join(docs_dir, 'Film Archiver Manual.pdf')
+
+if os.path.exists(readme_path):
+    datas.append((readme_path, '.'))
+    print(f"Including README.md from: {readme_path}")
+else:
+    print(f"Warning: README.md not found at: {readme_path}")
+
+if os.path.exists(manual_path):
+    datas.append((manual_path, '.'))
+    print(f"Including Film Archiver Manual.pdf from: {manual_path}")
+else:
+    print(f"Warning: Film Archiver Manual.pdf not found at: {manual_path}")
+
 # Runtime hooks - runs before the main script
 runtime_hooks_list = [
     os.path.join(spec_dir, 'hooks', 'rthook_tkinterdnd2.py'),

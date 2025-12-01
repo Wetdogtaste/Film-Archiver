@@ -215,7 +215,126 @@ def main():
         # Create a proper menu bar with standard macOS menu items
         # This replaces the default menu bar which includes the unwanted "Run widget demo" item
         import platform
+        import subprocess
+        import webbrowser
         from config.settings import APP_NAME, APP_VERSION
+        
+        def get_docs_path():
+            """Get the path to documentation files (bundled or development)."""
+            if _is_bundled():
+                # In bundled app, docs are in the Resources folder
+                bundle_dir = _get_bundle_dir()
+                return bundle_dir
+            else:
+                # In development, docs are in the parent directory
+                return os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        
+        def show_readme():
+            """Display the README in a scrollable window."""
+            docs_path = get_docs_path()
+            readme_path = os.path.join(docs_path, 'README.md')
+            
+            if not os.path.exists(readme_path):
+                from tkinter import messagebox
+                messagebox.showwarning(
+                    "README Not Found",
+                    f"Could not find README.md at:\n{readme_path}"
+                )
+                return
+            
+            # Read the README content
+            try:
+                with open(readme_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except Exception as e:
+                from tkinter import messagebox
+                messagebox.showerror("Error", f"Could not read README:\n{e}")
+                return
+            
+            # Create a new window
+            readme_window = tk.Toplevel(root)
+            readme_window.title(f"{APP_NAME} - README")
+            readme_window.geometry("800x600")
+            readme_window.minsize(600, 400)
+            
+            # Create a frame for the text and scrollbar
+            frame = tk.Frame(readme_window)
+            frame.pack(fill='both', expand=True, padx=10, pady=10)
+            
+            # Create scrollbar
+            scrollbar = tk.Scrollbar(frame)
+            scrollbar.pack(side='right', fill='y')
+            
+            # Create text widget with markdown-friendly formatting
+            text = tk.Text(
+                frame,
+                wrap='word',
+                yscrollcommand=scrollbar.set,
+                font=('SF Mono', 12) if platform.system() == 'Darwin' else ('Consolas', 11),
+                padx=15,
+                pady=15,
+                spacing1=2,
+                spacing3=2
+            )
+            text.pack(side='left', fill='both', expand=True)
+            scrollbar.config(command=text.yview)
+            
+            # Configure text tags for basic markdown styling
+            text.tag_configure('h1', font=('SF Pro Display', 24, 'bold') if platform.system() == 'Darwin' else ('Arial', 20, 'bold'), spacing1=10, spacing3=5)
+            text.tag_configure('h2', font=('SF Pro Display', 18, 'bold') if platform.system() == 'Darwin' else ('Arial', 16, 'bold'), spacing1=8, spacing3=4)
+            text.tag_configure('h3', font=('SF Pro Display', 14, 'bold') if platform.system() == 'Darwin' else ('Arial', 13, 'bold'), spacing1=6, spacing3=3)
+            text.tag_configure('code', font=('SF Mono', 11) if platform.system() == 'Darwin' else ('Consolas', 10), background='#f0f0f0')
+            text.tag_configure('bold', font=('SF Pro Text', 12, 'bold') if platform.system() == 'Darwin' else ('Arial', 11, 'bold'))
+            
+            # Simple markdown rendering
+            lines = content.split('\n')
+            for line in lines:
+                if line.startswith('# '):
+                    text.insert('end', line[2:] + '\n', 'h1')
+                elif line.startswith('## '):
+                    text.insert('end', line[3:] + '\n', 'h2')
+                elif line.startswith('### '):
+                    text.insert('end', line[4:] + '\n', 'h3')
+                elif line.startswith('```'):
+                    continue  # Skip code fence markers
+                elif line.startswith('|'):
+                    # Table row - display as-is with code formatting
+                    text.insert('end', line + '\n', 'code')
+                else:
+                    # Handle inline formatting
+                    text.insert('end', line + '\n')
+            
+            # Make text read-only
+            text.config(state='disabled')
+            
+            # Focus the new window
+            readme_window.focus_force()
+        
+        def open_manual():
+            """Open the PDF manual in the system's default PDF viewer."""
+            docs_path = get_docs_path()
+            manual_path = os.path.join(docs_path, 'Film Archiver Manual.pdf')
+            
+            if not os.path.exists(manual_path):
+                from tkinter import messagebox
+                messagebox.showwarning(
+                    "Manual Not Found",
+                    f"Could not find Film Archiver Manual.pdf at:\n{manual_path}"
+                )
+                return
+            
+            try:
+                if platform.system() == 'Darwin':
+                    # macOS - use 'open' command to open in Preview
+                    subprocess.run(['open', manual_path], check=True)
+                elif platform.system() == 'Windows':
+                    os.startfile(manual_path)
+                else:
+                    # Linux - try xdg-open
+                    subprocess.run(['xdg-open', manual_path], check=True)
+            except Exception as e:
+                from tkinter import messagebox
+                messagebox.showerror("Error", f"Could not open manual:\n{e}")
         
         def create_menu_bar():
             menubar = tk.Menu(root)
@@ -253,11 +372,14 @@ def main():
                 help_menu = tk.Menu(menubar, name='help', tearoff=0)
                 menubar.add_cascade(label="Help", menu=help_menu)
                 
-                def show_help():
-                    import webbrowser
+                help_menu.add_command(label="Film Archiver Manual", command=open_manual)
+                help_menu.add_command(label="View README", command=show_readme)
+                help_menu.add_separator()
+                
+                def show_online_help():
                     webbrowser.open("https://github.com/Wetdogtaste/Film-Archiver")
                 
-                help_menu.add_command(label=f"{APP_NAME} Help", command=show_help)
+                help_menu.add_command(label=f"{APP_NAME} Online Help", command=show_online_help)
                 
             else:
                 # Non-macOS menu bar (Windows/Linux)
@@ -270,6 +392,10 @@ def main():
                 # Help menu
                 help_menu = tk.Menu(menubar, tearoff=0)
                 menubar.add_cascade(label="Help", menu=help_menu)
+                
+                help_menu.add_command(label="Film Archiver Manual", command=open_manual)
+                help_menu.add_command(label="View README", command=show_readme)
+                help_menu.add_separator()
                 
                 def show_about():
                     from tkinter import messagebox

@@ -160,6 +160,47 @@ The roll number is your **universal catalog ID** linking digital files to physic
 
 ---
 
+## System Requirements
+
+### macOS Compatibility
+
+Film Archiver is built for macOS and supports a wide range of versions:
+
+| macOS Version | Support Status | Notes |
+|---------------|----------------|-------|
+| 10.13 High Sierra | ✅ Supported | Light theme only (no system dark mode) |
+| 10.14 Mojave | ✅ Supported | Full functionality including dark mode |
+| 10.15 Catalina | ✅ Supported | Full functionality |
+| 11.0 Big Sur | ✅ Supported | Full functionality |
+| 12.0 Monterey | ✅ Supported | Full functionality (Intel & Apple Silicon) |
+| 13.0 Ventura | ✅ Supported | Full functionality |
+| 14.0 Sonoma | ✅ Supported | Full functionality |
+| 15.0 Sequoia | ✅ Supported | Full functionality |
+
+**Architecture Support:**
+- ✅ Intel Macs (x64)
+- ✅ Apple Silicon Macs (M1/M2/M3/M4 - ARM64)
+
+### Known Limitations
+
+**Drag and Drop:** In the packaged DMG version, drag-and-drop is disabled due to compatibility issues with the bundled runtime. Use the **Add Files** button to select images instead. This does not affect any other functionality.
+
+**Dark Mode:** Automatic dark mode detection requires macOS 10.14 Mojave or later. On older versions, the app will use the light theme.
+
+### Gatekeeper Notice
+
+Since Film Archiver is not notarized with Apple, macOS may display a security warning on first launch. To open the app:
+
+1. **Right-click** (or Control-click) on Film Archiver in Applications
+2. Select **Open** from the context menu
+3. Click **Open** in the dialog that appears
+
+You only need to do this once—subsequent launches will work normally.
+
+Alternatively: System Preferences → Security & Privacy → General → click "Open Anyway"
+
+---
+
 ## Getting Started
 
 See the detailed [Installation & Usage Guide](film_archiver_app/README.md) in the app directory.
