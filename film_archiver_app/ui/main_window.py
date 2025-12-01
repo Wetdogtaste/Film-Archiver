@@ -1200,6 +1200,8 @@ class FilmArchiverWindow:
                 except:
                     pass
             top.destroy()
+            # Restore focus to the main window so input fields work
+            self.root.focus_force()
         
         def set_date():
             self.date_entry.delete(0, tk.END)

@@ -212,6 +212,80 @@ def main():
         # Create the application
         app = FilmArchiverWindow(root)
         
+        # Create a proper menu bar with standard macOS menu items
+        # This replaces the default menu bar which includes the unwanted "Run widget demo" item
+        import platform
+        from config.settings import APP_NAME, APP_VERSION
+        
+        def create_menu_bar():
+            menubar = tk.Menu(root)
+            
+            if platform.system() == 'Darwin':
+                # macOS specific menus
+                
+                # Application menu (automatically named after the app in bundled builds)
+                app_menu = tk.Menu(menubar, name='apple', tearoff=0)
+                menubar.add_cascade(menu=app_menu)
+                
+                # About menu item
+                def show_about():
+                    from tkinter import messagebox
+                    messagebox.showinfo(
+                        f"About {APP_NAME}",
+                        f"{APP_NAME}\n\n"
+                        f"Version: {APP_VERSION}\n\n"
+                        f"A tool for organizing and archiving\n"
+                        f"film photography scans with proper\n"
+                        f"naming, dates, and EXIF metadata.\n\n"
+                        f"© 2024"
+                    )
+                
+                app_menu.add_command(label=f"About {APP_NAME}", command=show_about)
+                app_menu.add_separator()
+                
+                # Preferences (placeholder for future use)
+                # app_menu.add_command(label="Preferences...", command=lambda: None, accelerator="⌘,")
+                # app_menu.add_separator()
+                
+                # Quit is automatically added by macOS for the apple menu
+                
+                # Help menu
+                help_menu = tk.Menu(menubar, name='help', tearoff=0)
+                menubar.add_cascade(label="Help", menu=help_menu)
+                
+                def show_help():
+                    import webbrowser
+                    webbrowser.open("https://github.com/Wetdogtaste/Film-Archiver")
+                
+                help_menu.add_command(label=f"{APP_NAME} Help", command=show_help)
+                
+            else:
+                # Non-macOS menu bar (Windows/Linux)
+                
+                # File menu
+                file_menu = tk.Menu(menubar, tearoff=0)
+                menubar.add_cascade(label="File", menu=file_menu)
+                file_menu.add_command(label="Exit", command=root.quit)
+                
+                # Help menu
+                help_menu = tk.Menu(menubar, tearoff=0)
+                menubar.add_cascade(label="Help", menu=help_menu)
+                
+                def show_about():
+                    from tkinter import messagebox
+                    messagebox.showinfo(
+                        f"About {APP_NAME}",
+                        f"{APP_NAME} v{APP_VERSION}\n\n"
+                        f"A tool for organizing film photography scans."
+                    )
+                
+                help_menu.add_command(label="About", command=show_about)
+            
+            root.config(menu=menubar)
+            logger.info("Created custom menu bar")
+        
+        create_menu_bar()
+        
         # Set up window close handling
         def on_closing():
             try:
