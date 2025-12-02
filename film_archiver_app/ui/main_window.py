@@ -265,7 +265,7 @@ class FilmArchiverWindow:
         ttk.Label(roll_frame, text="Roll Number:", width=12).pack(side='left')
         self.roll_number = ttk.Entry(roll_frame, width=10)
         self.roll_number.pack(side='left', padx=5)
-        self.roll_number.insert(0, "1")
+        # Start blank so user enters their starting roll for each session
         self.roll_number.bind('<KeyRelease>', lambda e: self.update_file_list())
         
         # Camera Model
@@ -1590,12 +1590,6 @@ class FilmArchiverWindow:
             files_to_process = self.files.copy()
             if self.reverse_var.get():
                 files_to_process.reverse()
-            
-            # Save preferences
-            if camera:
-                self.pref_manager.add_camera(camera)
-            if film:
-                self.pref_manager.add_film(film)
             
             total_files = len(files_to_process)
             processed_files = 0
