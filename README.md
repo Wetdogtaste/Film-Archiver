@@ -157,6 +157,7 @@ The roll number is your **universal catalog ID** linking digital files to physic
 - **Push/Pull notation** or custom shot-at ISO
 - **Dark mode** support (follows macOS system setting)
 - **RAW format support** (CR2, CR3, NEF, ARW, DNG, etc.)
+- **Auto-increment roll number** after processing for streamlined multi-roll workflow
 
 ---
 
@@ -189,7 +190,7 @@ Film Archiver is built for macOS and supports a wide range of versions:
 
 ### Gatekeeper Notice
 
-Since Film Archiver is not notarized with Apple, macOS may display a security warning on first launch. To open the app:
+Since Film Archiver is not yet notarized with Apple, macOS may display a security warning on first launch. To open the app:
 
 1. **Right-click** (or Control-click) on Film Archiver in Applications
 2. Select **Open** from the context menu
@@ -216,7 +217,7 @@ See the detailed [Installation & Usage Guide](film_archiver_app/README.md) in th
 
 ## Version
 
-**Current version: 1.2.2**
+**Current version: 1.2.3**
 
 See [Changelog](film_archiver_app/README.md#version-history) for release history.
 

@@ -336,6 +336,279 @@ def main():
                 from tkinter import messagebox
                 messagebox.showerror("Error", f"Could not open manual:\n{e}")
         
+        def show_donate_dialog():
+            """Show donation dialog with clickable payment icons."""
+            from PIL import Image, ImageTk
+            
+            # Create dialog window
+            donate_window = tk.Toplevel(root)
+            donate_window.title("Support Film Archiver")
+            donate_window.geometry("360x240")
+            donate_window.resizable(False, False)
+            
+            # Center the window on screen
+            donate_window.update_idletasks()
+            x = (donate_window.winfo_screenwidth() // 2) - (360 // 2)
+            y = (donate_window.winfo_screenheight() // 2) - (240 // 2)
+            donate_window.geometry(f"360x240+{x}+{y}")
+            
+            # Make it modal
+            donate_window.transient(root)
+            donate_window.grab_set()
+            
+            # Message
+            message = tk.Label(
+                donate_window,
+                text="Thank you for considering a donation!\nIt helps keep this little midnight\nproject going.",
+                font=('SF Pro Display', 13) if platform.system() == 'Darwin' else ('Arial', 11),
+                justify='center',
+                pady=20
+            )
+            message.pack()
+            
+            # Icons frame
+            icons_frame = tk.Frame(donate_window)
+            icons_frame.pack(pady=15)
+            
+            # Icon display size (100x100 for better quality on Retina)
+            icon_display_size = (100, 100)
+            
+            # Get path for icons (handles both bundled and development)
+            if _is_bundled():
+                icons_dir = _get_bundle_dir()
+            else:
+                icons_dir = os.path.dirname(os.path.abspath(__file__))
+            
+            # Store references to prevent garbage collection
+            donate_window.icon_refs = []
+            
+            def load_and_resize_icon(path, size):
+                """Load an icon and resize it properly, handling palette mode images."""
+                img = Image.open(path)
+                # Convert palette mode (P) or other modes to RGBA for proper transparency
+                if img.mode != 'RGBA':
+                    img = img.convert('RGBA')
+                # Use high-quality LANCZOS resampling
+                img = img.resize(size, Image.Resampling.LANCZOS)
+                return img
+            
+            # Venmo icon
+            try:
+                venmo_path = os.path.join(icons_dir, 'venmo_icon.png')
+                venmo_img = load_and_resize_icon(venmo_path, icon_display_size)
+                venmo_photo = ImageTk.PhotoImage(venmo_img)
+                donate_window.icon_refs.append(venmo_photo)
+                
+                venmo_label = tk.Label(
+                    icons_frame,
+                    image=venmo_photo,
+                    cursor="pointinghand"
+                )
+                venmo_label.pack(side='left', padx=20)
+                venmo_label.bind('<Button-1>', lambda e: webbrowser.open("https://venmo.com/u/Michaeldziebell"))
+            except Exception as e:
+                logger.warning(f"Could not load Venmo icon: {e}")
+                # Fallback text label
+                venmo_label = tk.Label(
+                    icons_frame,
+                    text="Venmo",
+                    fg="blue",
+                    cursor="pointinghand",
+                    font=('SF Pro Display', 14) if platform.system() == 'Darwin' else ('Arial', 12)
+                )
+                venmo_label.pack(side='left', padx=20)
+                venmo_label.bind('<Button-1>', lambda e: webbrowser.open("https://venmo.com/u/Michaeldziebell"))
+            
+            # Cash App icon
+            try:
+                cashapp_path = os.path.join(icons_dir, 'cashapp_icon.png')
+                cashapp_img = load_and_resize_icon(cashapp_path, icon_display_size)
+                cashapp_photo = ImageTk.PhotoImage(cashapp_img)
+                donate_window.icon_refs.append(cashapp_photo)
+                
+                cashapp_label = tk.Label(
+                    icons_frame,
+                    image=cashapp_photo,
+                    cursor="pointinghand"
+                )
+                cashapp_label.pack(side='left', padx=20)
+                cashapp_label.bind('<Button-1>', lambda e: webbrowser.open("https://cash.app/$MichaelZiebell"))
+            except Exception as e:
+                logger.warning(f"Could not load Cash App icon: {e}")
+                # Fallback text label
+                cashapp_label = tk.Label(
+                    icons_frame,
+                    text="Cash App",
+                    fg="green",
+                    cursor="pointinghand",
+                    font=('SF Pro Display', 14) if platform.system() == 'Darwin' else ('Arial', 12)
+                )
+                cashapp_label.pack(side='left', padx=20)
+                cashapp_label.bind('<Button-1>', lambda e: webbrowser.open("https://cash.app/$MichaelZiebell"))
+            
+            # Focus the window
+            donate_window.focus_force()
+        
+        def check_for_updates():
+            """Check GitHub releases for available updates."""
+            import urllib.request
+            import json
+            from tkinter import messagebox
+            
+            GITHUB_API_URL = "https://api.github.com/repos/Wetdogtaste/Film-Archiver/releases/latest"
+            
+            def compare_versions(v1, v2):
+                """Compare two version strings. Returns: -1 if v1 < v2, 0 if equal, 1 if v1 > v2"""
+                def parse_version(v):
+                    # Remove 'v' prefix if present
+                    v = v.lstrip('v').lstrip('V')
+                    # Split by dots and convert to integers
+                    parts = []
+                    for part in v.split('.'):
+                        try:
+                            parts.append(int(part))
+                        except ValueError:
+                            parts.append(0)
+                    return parts
+                
+                p1 = parse_version(v1)
+                p2 = parse_version(v2)
+                
+                # Pad shorter version with zeros
+                max_len = max(len(p1), len(p2))
+                p1.extend([0] * (max_len - len(p1)))
+                p2.extend([0] * (max_len - len(p2)))
+                
+                for a, b in zip(p1, p2):
+                    if a < b:
+                        return -1
+                    elif a > b:
+                        return 1
+                return 0
+            
+            def show_update_dialog(latest_version, release_url, release_notes):
+                """Show dialog when an update is available."""
+                update_window = tk.Toplevel(root)
+                update_window.title("Update Available")
+                update_window.geometry("450x250")
+                update_window.resizable(False, False)
+                
+                # Center the window
+                update_window.update_idletasks()
+                x = (update_window.winfo_screenwidth() // 2) - (450 // 2)
+                y = (update_window.winfo_screenheight() // 2) - (250 // 2)
+                update_window.geometry(f"450x250+{x}+{y}")
+                
+                # Make it modal
+                update_window.transient(root)
+                update_window.grab_set()
+                
+                # Message
+                msg = tk.Label(
+                    update_window,
+                    text=f"A new version of {APP_NAME} is available!",
+                    font=('SF Pro Display', 14, 'bold') if platform.system() == 'Darwin' else ('Arial', 12, 'bold'),
+                    pady=15
+                )
+                msg.pack()
+                
+                version_info = tk.Label(
+                    update_window,
+                    text=f"Current version: {APP_VERSION}\nLatest version: {latest_version}",
+                    font=('SF Pro Display', 12) if platform.system() == 'Darwin' else ('Arial', 10),
+                    justify='center'
+                )
+                version_info.pack(pady=10)
+                
+                # Buttons frame
+                btn_frame = tk.Frame(update_window)
+                btn_frame.pack(pady=20)
+                
+                def open_download():
+                    webbrowser.open(release_url)
+                    update_window.destroy()
+                
+                download_btn = tk.Button(
+                    btn_frame,
+                    text="Download Update",
+                    command=open_download,
+                    width=15
+                )
+                download_btn.pack(side='left', padx=10)
+                
+                later_btn = tk.Button(
+                    btn_frame,
+                    text="Later",
+                    command=update_window.destroy,
+                    width=10
+                )
+                later_btn.pack(side='left', padx=10)
+                
+                update_window.focus_force()
+            
+            try:
+                # Create request with user agent (GitHub API requires it)
+                request = urllib.request.Request(
+                    GITHUB_API_URL,
+                    headers={'User-Agent': f'{APP_NAME}/{APP_VERSION}'}
+                )
+                
+                with urllib.request.urlopen(request, timeout=10) as response:
+                    data = json.loads(response.read().decode('utf-8'))
+                    
+                    latest_version = data.get('tag_name', '').lstrip('v').lstrip('V')
+                    release_url = data.get('html_url', 'https://github.com/Wetdogtaste/Film-Archiver/releases')
+                    release_notes = data.get('body', '')
+                    
+                    if not latest_version:
+                        messagebox.showinfo(
+                            "Check for Updates",
+                            "Unable to determine the latest version.\n\nPlease check GitHub releases manually."
+                        )
+                        return
+                    
+                    comparison = compare_versions(APP_VERSION, latest_version)
+                    
+                    if comparison < 0:
+                        # Update available
+                        show_update_dialog(latest_version, release_url, release_notes)
+                    elif comparison == 0:
+                        # Up to date
+                        messagebox.showinfo(
+                            "Check for Updates",
+                            f"You're running the latest version!\n\n{APP_NAME} {APP_VERSION}"
+                        )
+                    else:
+                        # Running newer version (development)
+                        messagebox.showinfo(
+                            "Check for Updates",
+                            f"You're running a newer version than the latest release.\n\n"
+                            f"Current: {APP_VERSION}\nLatest release: {latest_version}"
+                        )
+                        
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    messagebox.showinfo(
+                        "Check for Updates",
+                        "No releases available yet.\n\nCheck back later for updates!"
+                    )
+                else:
+                    messagebox.showerror(
+                        "Check for Updates",
+                        f"Unable to check for updates.\n\nHTTP Error: {e.code}"
+                    )
+            except urllib.error.URLError as e:
+                messagebox.showerror(
+                    "Check for Updates",
+                    "Unable to check for updates.\n\nPlease check your internet connection."
+                )
+            except Exception as e:
+                logger.error(f"Error checking for updates: {e}")
+                messagebox.showerror(
+                    "Check for Updates",
+                    f"An error occurred while checking for updates.\n\n{str(e)}"
+                )
+        
         def create_menu_bar():
             menubar = tk.Menu(root)
             
@@ -361,6 +634,8 @@ def main():
                 
                 app_menu.add_command(label=f"About {APP_NAME}", command=show_about)
                 app_menu.add_separator()
+                app_menu.add_command(label="Check for Updates...", command=check_for_updates)
+                app_menu.add_separator()
                 
                 # Preferences (placeholder for future use)
                 # app_menu.add_command(label="Preferences...", command=lambda: None, accelerator="⌘,")
@@ -380,6 +655,10 @@ def main():
                     webbrowser.open("https://github.com/Wetdogtaste/Film-Archiver")
                 
                 help_menu.add_command(label=f"{APP_NAME} Online Help", command=show_online_help)
+                help_menu.add_separator()
+                help_menu.add_command(label="Check for Updates...", command=check_for_updates)
+                help_menu.add_separator()
+                help_menu.add_command(label="Support Development...", command=show_donate_dialog)
                 
             else:
                 # Non-macOS menu bar (Windows/Linux)
@@ -406,6 +685,10 @@ def main():
                     )
                 
                 help_menu.add_command(label="About", command=show_about)
+                help_menu.add_separator()
+                help_menu.add_command(label="Check for Updates...", command=check_for_updates)
+                help_menu.add_separator()
+                help_menu.add_command(label="Support Development...", command=show_donate_dialog)
             
             root.config(menu=menubar)
             logger.info("Created custom menu bar")

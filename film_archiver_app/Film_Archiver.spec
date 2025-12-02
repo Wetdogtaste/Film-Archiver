@@ -93,6 +93,22 @@ if os.path.exists(manual_path):
 else:
     print(f"Warning: Film Archiver Manual.pdf not found at: {manual_path}")
 
+# Include donation icons
+venmo_icon = os.path.join(spec_dir, 'venmo_icon.png')
+cashapp_icon = os.path.join(spec_dir, 'cashapp_icon.png')
+
+if os.path.exists(venmo_icon):
+    datas.append((venmo_icon, '.'))
+    print(f"Including venmo_icon.png from: {venmo_icon}")
+else:
+    print(f"Warning: venmo_icon.png not found at: {venmo_icon}")
+
+if os.path.exists(cashapp_icon):
+    datas.append((cashapp_icon, '.'))
+    print(f"Including cashapp_icon.png from: {cashapp_icon}")
+else:
+    print(f"Warning: cashapp_icon.png not found at: {cashapp_icon}")
+
 # Runtime hooks - runs before the main script
 runtime_hooks_list = [
     os.path.join(spec_dir, 'hooks', 'rthook_tkinterdnd2.py'),
@@ -149,8 +165,8 @@ app = BUNDLE(coll,
             info_plist={
                 'LSMinimumSystemVersion': '10.13.0',
                 'NSHighResolutionCapable': True,
-                'CFBundleShortVersionString': '1.2.1',
-                'CFBundleVersion': '1.2.1',
+                'CFBundleShortVersionString': '1.2.2',
+                'CFBundleVersion': '1.2.2',
                 'NSHumanReadableCopyright': '© 2024-2025 Michael Ziebell',
                 'NSAppleEventsUsageDescription': 'Please allow access to execute applescript for folder operations.'
             })

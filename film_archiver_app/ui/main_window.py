@@ -1702,6 +1702,16 @@ class FilmArchiverWindow:
             self.camera_model['values'] = self.pref_manager.get_cameras()
             self.film_type['values'] = self.pref_manager.get_films()
             
+            # Auto-increment roll number for next roll
+            try:
+                current_roll = int(self.roll_number.get())
+                self.roll_number.delete(0, tk.END)
+                self.roll_number.insert(0, str(current_roll + 1))
+            except ValueError:
+                # If roll number is invalid, set to 1
+                self.roll_number.delete(0, tk.END)
+                self.roll_number.insert(0, "1")
+            
             # Show success message and open folder
             messagebox.showinfo("Success", f"Successfully processed {processed_files}/{total_files} files!")
             

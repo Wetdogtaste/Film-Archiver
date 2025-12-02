@@ -8,6 +8,10 @@
 		<data>
 		ObAM6QK3FOk58+DVrtqIUXzAe2Q=
 		</data>
+		<key>Resources/Film Archiver Manual.pdf</key>
+		<data>
+		v9qTqJ2mwH9CrOlKDD2f6QZK+Ec=
+		</data>
 		<key>Resources/PIL/_imaging.pyi</key>
 		<data>
 		ytlEs9K8ZTJhjhzZ4YYdqhY5euo=
@@ -39,6 +43,10 @@
 		<key>Resources/PIL/py.typed</key>
 		<data>
 		2jmj7l5rSw0yVb/vlWAYkK/YBwk=
+		</data>
+		<key>Resources/README.md</key>
+		<data>
+		UKcaUy3VsO4Skhnk9obsXKUfqWA=
 		</data>
 		<key>Resources/_tcl_data/auto.tcl</key>
 		<data>
@@ -5610,7 +5618,11 @@
 		</data>
 		<key>Resources/base_library.zip</key>
 		<data>
-		c3Bdzslr3WDo8ArEdnEdPm2LtEU=
+		/+CiCsclg8yzi4LjC9ky3xLcD9A=
+		</data>
+		<key>Resources/cashapp_icon.png</key>
+		<data>
+		EC4jfyWaDIxLsoomqzFM3HmqTPo=
 		</data>
 		<key>Resources/config/__init__.py</key>
 		<data>
@@ -5630,11 +5642,11 @@
 		</data>
 		<key>Resources/config/__pycache__/settings.cpython-313.pyc</key>
 		<data>
-		GIzsqnhXsX+NMZjgQY/I0BRzN8o=
+		uyBRBId0ouFbaPvld1f/KrzD50k=
 		</data>
 		<key>Resources/config/settings.py</key>
 		<data>
-		QB2i9yh8VhUBFEWRtm8KQPRQ/6Q=
+		ho8vjgeQS9EyqdzDSxKzHnwYVWM=
 		</data>
 		<key>Resources/core/__init__.py</key>
 		<data>
@@ -6270,11 +6282,11 @@
 		</data>
 		<key>Resources/ui/__pycache__/main_window.cpython-313.pyc</key>
 		<data>
-		Y2npgBkNtiUbcKmYbsQfq+gJhTQ=
+		QGhpDzoNUSSOiwtVQ3IQa4TIYi4=
 		</data>
 		<key>Resources/ui/main_window.py</key>
 		<data>
-		QvbL1dFXqHcCFlqFce4gxXQt0E8=
+		OcNB0bPZU9G8Egf7b5dBfw7EtCI=
 		</data>
 		<key>Resources/ui/widgets/__init__.py</key>
 		<data>
@@ -6307,6 +6319,10 @@
 		<key>Resources/utils/macos_dnd.py</key>
 		<data>
 		lQ4ljOqLVe21Oz/kDV/5aZythgE=
+		</data>
+		<key>Resources/venmo_icon.png</key>
+		<data>
+		dfxqvu3bS6qhjOlbQU6UpaZhNZQ=
 		</data>
 	</dict>
 	<key>files2</key>
@@ -6346,6 +6362,11 @@
 			</data>
 			<key>requirement</key>
 			<string>cdhash H"8f8351d63ac8770b0a803e1a0db5fa4bda2dafb4"</string>
+		</dict>
+		<key>Frameworks/Film Archiver Manual.pdf</key>
+		<dict>
+			<key>symlink</key>
+			<string>../Resources/Film Archiver Manual.pdf</string>
 		</dict>
 		<key>Frameworks/Foundation/_Foundation.cpython-313-darwin.so</key>
 		<dict>
@@ -6730,6 +6751,11 @@
 			<key>requirement</key>
 			<string>cdhash H"f8153e9f12528ccff1601948b6b68ea3a041fb49"</string>
 		</dict>
+		<key>Frameworks/README.md</key>
+		<dict>
+			<key>symlink</key>
+			<string>../Resources/README.md</string>
+		</dict>
 		<key>Frameworks/_tcl_data</key>
 		<dict>
 			<key>symlink</key>
@@ -6758,6 +6784,11 @@
 		<dict>
 			<key>symlink</key>
 			<string>../Resources/base_library.zip</string>
+		</dict>
+		<key>Frameworks/cashapp_icon.png</key>
+		<dict>
+			<key>symlink</key>
+			<string>../Resources/cashapp_icon.png</string>
 		</dict>
 		<key>Frameworks/config</key>
 		<dict>
@@ -7665,6 +7696,11 @@
 			<key>symlink</key>
 			<string>../Resources/utils</string>
 		</dict>
+		<key>Frameworks/venmo_icon.png</key>
+		<dict>
+			<key>symlink</key>
+			<string>../Resources/venmo_icon.png</string>
+		</dict>
 		<key>Resources/AppIcon.icns</key>
 		<dict>
 			<key>hash2</key>
@@ -7681,6 +7717,13 @@
 		<dict>
 			<key>symlink</key>
 			<string>../Frameworks/CoreFoundation</string>
+		</dict>
+		<key>Resources/Film Archiver Manual.pdf</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			VSNxJ1kkyNCvn8xijujyvEEPmbbk1yUAml+qqLUP3ps=
+			</data>
 		</dict>
 		<key>Resources/Foundation</key>
 		<dict>
@@ -7797,6 +7840,13 @@
 		<dict>
 			<key>symlink</key>
 			<string>../Frameworks/Quartz</string>
+		</dict>
+		<key>Resources/README.md</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			t5Ctws25GSg0x0a5XRqWoTwSbMwMkwAgzAN+MHxjAbk=
+			</data>
 		</dict>
 		<key>Resources/_tcl_data/auto.tcl</key>
 		<dict>
@@ -17551,7 +17601,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			4bM00HtplhHwYRtMa9OvT2405VJ8YYN4t4llHCUN8oE=
+			5bUbrUf3g36/GOiBY2k4aSP96nNjp4NmS0Aqkv4VxV4=
+			</data>
+		</dict>
+		<key>Resources/cashapp_icon.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			f56Dq9jwfsZZw3eTjl5JG0i7GbJ12SmgI3K2roVcURs=
 			</data>
 		</dict>
 		<key>Resources/config/__init__.py</key>
@@ -17586,14 +17643,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			U3RkvJQDIB/1tYeo2XMZgOSlSItMUrIh5APzlhOBD1k=
+			tbd6wjSyK0R+1UcVy19nx7428BWpZQIw/uEgJ7q3KiY=
 			</data>
 		</dict>
 		<key>Resources/config/settings.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			iizg5GvaSIDFKhJ2OqnvlhiKFbEcOiuehS2PLaD1FS4=
+			9DmBC8A80wwNfoR+baXIR4DzFwe2ghF6A4KuvlXg5zE=
 			</data>
 		</dict>
 		<key>Resources/core/__init__.py</key>
@@ -18851,14 +18908,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			/Kpm9CeSNs8mAtTgpuUugdpSOYCIiRwgPYGDzSfm7Zg=
+			SOuJoRcUzma2S/4mc6Rt6so8haMzdu+yD35bpKcY3wM=
 			</data>
 		</dict>
 		<key>Resources/ui/main_window.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			nb2JNdhzJKlMtX6foin03teW+qYl2nqn4UvBHJrfl+E=
+			hGYylOM817QysvGCnoDriaWP68J5/T9UdkD2N7/NDp0=
 			</data>
 		</dict>
 		<key>Resources/ui/widgets/__init__.py</key>
@@ -18915,6 +18972,13 @@
 			<key>hash2</key>
 			<data>
 			oMVbwoJOPH+28/XKMFSyeDH4Vdm7HaLrGP8ox7RpgvA=
+			</data>
+		</dict>
+		<key>Resources/venmo_icon.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			IGO82Uz+twt1tHCh8nrN8EEOYJFKovoicJsa91Wdsi0=
 			</data>
 		</dict>
 	</dict>

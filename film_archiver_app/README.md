@@ -13,6 +13,7 @@ A tool for organizing and renaming film photography scans.
 - Reverse file order when needed
 - Dark mode support
 - Dynamic roll numbering (supports archives of any size)
+- Auto-increment roll number after processing (streamlined multi-roll workflow)
 
 ## Installation
 
@@ -79,7 +80,24 @@ This ensures proper sorting regardless of archive size.
    - The lens will be applied to all selected photos
 6. Click "Process Files" to organize your photos
 
+### Processing Multiple Rolls
+
+When processing multiple rolls from a trip or backlog:
+1. Set up your camera, film, and date for the first roll
+2. Add files and process as normal
+3. After processing, the roll number **automatically increments** by 1
+4. Your camera, film, date, and lens settings are preserved
+5. Simply add the next roll's files and adjust settings as needed
+6. Repeat until all rolls are processed
+
+This streamlined workflow means you only need to adjust what changes between rolls.
+
 ## Version History
+
+### 1.2.3 (2025-12-01)
+- Added auto-increment roll number after processing
+- Streamlined workflow for processing multiple rolls in sequence
+- Settings (camera, film, date, lens) now persist between rolls
 
 ### 1.2.2 (2025-11-30)
 - Fixed blank "tk" window appearing behind main app
