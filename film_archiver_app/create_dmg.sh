@@ -14,7 +14,7 @@ if [ ! -d "dist/Film Archiver.app" ]; then
 fi
 
 # Set version
-VERSION="1.2.3"
+VERSION="1.2.4"
 DMG_NAME="Film_Archiver_v${VERSION}.dmg"
 VOLUME_NAME="Film Archiver"
 

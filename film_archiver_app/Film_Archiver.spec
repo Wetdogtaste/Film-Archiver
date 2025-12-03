@@ -165,8 +165,8 @@ app = BUNDLE(coll,
             info_plist={
                 'LSMinimumSystemVersion': '10.13.0',
                 'NSHighResolutionCapable': True,
-                'CFBundleShortVersionString': '1.2.2',
-                'CFBundleVersion': '1.2.2',
+                'CFBundleShortVersionString': '1.2.4',
+                'CFBundleVersion': '1.2.4',
                 'NSHumanReadableCopyright': '© 2024-2025 Michael Ziebell',
                 'NSAppleEventsUsageDescription': 'Please allow access to execute applescript for folder operations.'
             })
