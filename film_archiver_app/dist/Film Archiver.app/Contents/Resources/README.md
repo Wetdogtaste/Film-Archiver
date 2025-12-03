@@ -158,6 +158,8 @@ The roll number is your **universal catalog ID** linking digital files to physic
 - **Dark mode** support (follows macOS system setting)
 - **RAW format support** (CR2, CR3, NEF, ARW, DNG, etc.)
 - **Auto-increment roll number** after processing for streamlined multi-roll workflow
+- **Smart destination memory** — folder picker opens to the parent of last used location
+- **Bug report & feature request** — submit feedback directly from the Help menu
 
 ---
 
@@ -217,7 +219,7 @@ See the detailed [Installation & Usage Guide](film_archiver_app/README.md) in th
 
 ## Version
 
-**Current version: 1.2.3**
+**Current version: 1.2.4**
 
 See [Changelog](film_archiver_app/README.md#version-history) for release history.
 

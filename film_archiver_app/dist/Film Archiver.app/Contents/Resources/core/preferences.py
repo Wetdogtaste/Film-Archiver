@@ -14,6 +14,7 @@ class PreferenceManager:
         self.films = []
         self.lenses = []  # Add lenses list
         self.dark_mode = False  # Theme preference (False = light, True = dark)
+        self.last_output_dir = None  # Last used output directory (parent level)
         self.preferences_file = APP_DIR / "preferences.json"
         self.load_preferences()
     
@@ -27,6 +28,7 @@ class PreferenceManager:
                     self.films = prefs.get('films', [])
                     self.lenses = prefs.get('lenses', [])
                     self.dark_mode = prefs.get('dark_mode', False)
+                    self.last_output_dir = prefs.get('last_output_dir', None)
         except Exception as e:
             logger.error(f"Error loading preferences: {e}")
     
@@ -39,7 +41,8 @@ class PreferenceManager:
                     'cameras': self.cameras,
                     'films': self.films,
                     'lenses': self.lenses,
-                    'dark_mode': self.dark_mode
+                    'dark_mode': self.dark_mode,
+                    'last_output_dir': self.last_output_dir
                 }, f, indent=2)
         except Exception as e:
             logger.error(f"Error saving preferences: {e}")
@@ -106,3 +109,21 @@ class PreferenceManager:
         """Set dark mode preference"""
         self.dark_mode = enabled
         self.save_preferences()
+    
+    def get_last_output_dir(self):
+        """Get last used output directory"""
+        # Return None if the directory no longer exists
+        if self.last_output_dir and os.path.isdir(self.last_output_dir):
+            return self.last_output_dir
+        return None
+    
+    def set_last_output_dir(self, directory):
+        """Set last used output directory (saves parent directory)"""
+        if directory and os.path.isdir(directory):
+            # Save the parent directory so next time we open one level above
+            parent_dir = os.path.dirname(directory)
+            if parent_dir and os.path.isdir(parent_dir):
+                self.last_output_dir = parent_dir
+            else:
+                self.last_output_dir = directory
+            self.save_preferences()

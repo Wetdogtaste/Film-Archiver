@@ -449,6 +449,54 @@ def main():
             # Focus the window
             donate_window.focus_force()
         
+        def get_system_info():
+            """Get system information for bug reports."""
+            import platform as plat
+            macos_version = plat.mac_ver()[0] if plat.system() == 'Darwin' else plat.platform()
+            return {
+                'app_version': APP_VERSION,
+                'macos_version': macos_version
+            }
+        
+        def open_bug_report():
+            """Open the bug report form with system info pre-filled."""
+            import urllib.parse
+            
+            system_info = get_system_info()
+            
+            # Google Form base URL and entry IDs
+            form_id = "1FAIpQLSfvx_tL0xVRr-zHJgWXpahZhGPOb_SxQ7Wwtq9vY9SJWvbaAQ"
+            base_url = f"https://docs.google.com/forms/d/e/{form_id}/viewform"
+            
+            # Pre-fill parameters
+            params = {
+                'entry.1826197573': system_info['app_version'],
+                'entry.1293316492': system_info['macos_version']
+            }
+            
+            # Build URL with pre-filled values
+            url = f"{base_url}?{urllib.parse.urlencode(params)}"
+            webbrowser.open(url)
+        
+        def open_feature_request():
+            """Open the feature request form with app version pre-filled."""
+            import urllib.parse
+            
+            system_info = get_system_info()
+            
+            # Google Form base URL and entry IDs
+            form_id = "1FAIpQLSeP0oKS3My2mIYErq4ajhOXyhMbfPDrxB8NilUdT10ijCOTXQ"
+            base_url = f"https://docs.google.com/forms/d/e/{form_id}/viewform"
+            
+            # Pre-fill parameters
+            params = {
+                'entry.806676422': system_info['app_version']
+            }
+            
+            # Build URL with pre-filled values
+            url = f"{base_url}?{urllib.parse.urlencode(params)}"
+            webbrowser.open(url)
+        
         def check_for_updates():
             """Check GitHub releases for available updates."""
             import urllib.request
@@ -658,6 +706,9 @@ def main():
                 help_menu.add_separator()
                 help_menu.add_command(label="Check for Updates...", command=check_for_updates)
                 help_menu.add_separator()
+                help_menu.add_command(label="Report Bug...", command=open_bug_report)
+                help_menu.add_command(label="Request Feature...", command=open_feature_request)
+                help_menu.add_separator()
                 help_menu.add_command(label="Support Development...", command=show_donate_dialog)
                 
             else:
@@ -687,6 +738,9 @@ def main():
                 help_menu.add_command(label="About", command=show_about)
                 help_menu.add_separator()
                 help_menu.add_command(label="Check for Updates...", command=check_for_updates)
+                help_menu.add_separator()
+                help_menu.add_command(label="Report Bug...", command=open_bug_report)
+                help_menu.add_command(label="Request Feature...", command=open_feature_request)
                 help_menu.add_separator()
                 help_menu.add_command(label="Support Development...", command=show_donate_dialog)
             

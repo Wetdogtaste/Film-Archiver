@@ -94,6 +94,11 @@ This streamlined workflow means you only need to adjust what changes between rol
 
 ## Version History
 
+### 1.2.4 (2025-12-03)
+- Added smart destination folder memory (opens to parent of last used location)
+- Added bug report and feature request forms in Help menu
+- System info (app version, macOS version) automatically included in reports
+
 ### 1.2.3 (2025-12-01)
 - Added auto-increment roll number after processing
 - Streamlined workflow for processing multiple rolls in sequence

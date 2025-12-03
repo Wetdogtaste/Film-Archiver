@@ -19,13 +19,13 @@ __license__ = "MIT"
 # Version information
 VERSION_MAJOR = 1
 VERSION_MINOR = 2
-VERSION_PATCH = 3
-VERSION_DATE = "2025-12-01"
+VERSION_PATCH = 4
+VERSION_DATE = "2025-12-03"
 APP_VERSION = f"{VERSION_MAJOR}.{VERSION_MINOR}.{VERSION_PATCH}"
 
 # Application Constants
 APP_NAME = "Film Archiver"
-APP_VERSION = "1.2.3"
+APP_VERSION = "1.2.4"
 
 # Platform-specific settings
 IS_MACOS = sys.platform == 'darwin'

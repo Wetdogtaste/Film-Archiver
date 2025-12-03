@@ -46,7 +46,7 @@
 		</data>
 		<key>Resources/README.md</key>
 		<data>
-		UKcaUy3VsO4Skhnk9obsXKUfqWA=
+		ksH9qkLGk21SCHkkX7NxbThxZEE=
 		</data>
 		<key>Resources/_tcl_data/auto.tcl</key>
 		<data>
@@ -5618,7 +5618,7 @@
 		</data>
 		<key>Resources/base_library.zip</key>
 		<data>
-		HgNjnB6iVPx0D86UC3jJAcPFmgw=
+		Nihmnttu/tm5PbdJt4q9epOaP54=
 		</data>
 		<key>Resources/cashapp_icon.png</key>
 		<data>
@@ -5646,7 +5646,7 @@
 		</data>
 		<key>Resources/config/settings.py</key>
 		<data>
-		ho8vjgeQS9EyqdzDSxKzHnwYVWM=
+		RXSgyskPkqmSn7txqVPvmhPPHE8=
 		</data>
 		<key>Resources/core/__init__.py</key>
 		<data>
@@ -5674,7 +5674,7 @@
 		</data>
 		<key>Resources/core/__pycache__/preferences.cpython-313.pyc</key>
 		<data>
-		jbJopyPSz83Y/e6D1Ruul0Mkuvo=
+		+Yp0w24Me7ZR++rNmdS3wBlVJoc=
 		</data>
 		<key>Resources/core/file_manager.py</key>
 		<data>
@@ -5682,7 +5682,7 @@
 		</data>
 		<key>Resources/core/preferences.py</key>
 		<data>
-		eCRlF74QPPvf+1m03GEIHiLX31g=
+		b4hneKriqLYy1tydIPXsQS4KKSg=
 		</data>
 		<key>Resources/setuptools/_vendor/importlib_metadata-8.0.0.dist-info/INSTALLER</key>
 		<data>
@@ -6282,11 +6282,11 @@
 		</data>
 		<key>Resources/ui/__pycache__/main_window.cpython-313.pyc</key>
 		<data>
-		QGhpDzoNUSSOiwtVQ3IQa4TIYi4=
+		r5EAE0qTiC+Ize15hBq1WQDPdAo=
 		</data>
 		<key>Resources/ui/main_window.py</key>
 		<data>
-		gkJPxdFBb7z/kREULGv23T3bYoI=
+		CiE8vf4wmTqsfNVv1J89ZncwrbY=
 		</data>
 		<key>Resources/ui/widgets/__init__.py</key>
 		<data>
@@ -7845,7 +7845,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			t5Ctws25GSg0x0a5XRqWoTwSbMwMkwAgzAN+MHxjAbk=
+			yYNmxFO3OrqxlCwzI3pakpvdjC5p5LEVLK9bdT6SSQI=
 			</data>
 		</dict>
 		<key>Resources/_tcl_data/auto.tcl</key>
@@ -17601,7 +17601,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			vs5GbvD9+oGd4co2xvd9QlCNj/8GOsxeQ+kjgV9HlEo=
+			rCKmxw3h+CklcpMypCTcZBh6GJV5nMFfH1XBnwFrb3E=
 			</data>
 		</dict>
 		<key>Resources/cashapp_icon.png</key>
@@ -17650,7 +17650,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			9DmBC8A80wwNfoR+baXIR4DzFwe2ghF6A4KuvlXg5zE=
+			v5PJOAn25ELF4EsAkr1pYdYr4bJrULJxSTPc5YRwt9w=
 			</data>
 		</dict>
 		<key>Resources/core/__init__.py</key>
@@ -17699,7 +17699,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			bguM6yGl5JRMNovcUg5z6/xV9EC3HNzX1KUdPdsj0uA=
+			LKUCb7KkyuiZ5C6Ia8WqArCIt+ex2JhW8H4CUELeI4Q=
 			</data>
 		</dict>
 		<key>Resources/core/file_manager.py</key>
@@ -17713,7 +17713,7 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			KeUff5wc/265PHy7bRUlKXuCPRb1IniwjGv2LZUtDgY=
+			oCa9fBya+ztCyfolR0F63Aot7FlfHxYT+rEUHlyz+Ig=
 			</data>
 		</dict>
 		<key>Resources/libXau.6.dylib</key>
@@ -18908,14 +18908,14 @@
 		<dict>
 			<key>hash2</key>
 			<data>
-			SOuJoRcUzma2S/4mc6Rt6so8haMzdu+yD35bpKcY3wM=
+			5HamHFqH2CqER2eMn14/CFh6Y5cefdOogRG4FFrAKpk=
 			</data>
 		</dict>
 		<key>Resources/ui/main_window.py</key>
 		<dict>
 			<key>hash2</key>
 			<data>
-			h2oklB2j2r/sZKmujt3KE8Wg9m7721KPXxRHjtq4qMc=
+			ZDHyqFCIoJ2TtpVsDHO04CgipmuKHYs9vAca81aJ3Iw=
 			</data>
 		</dict>
 		<key>Resources/ui/widgets/__init__.py</key>

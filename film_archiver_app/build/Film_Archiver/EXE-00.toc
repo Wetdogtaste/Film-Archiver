@@ -79,7 +79,7 @@
  [],
  False,
  False,
- 1764650089,
+ 1764790610,
  [('runw',
    '/Users/michaelziebell/Documents/Develop '
    'Projects/GitHub/Film-Archiver/film_archiver_app/venv/lib/python3.13/site-packages/PyInstaller/bootloader/Darwin-64bit/runw',

@@ -1555,12 +1555,17 @@ class FilmArchiverWindow:
                 messagebox.showwarning("Warning", "Please fill in all fields")
                 return
                 
-            # Ask user for output directory
+            # Ask user for output directory (start at last used location if available)
+            initial_dir = self.pref_manager.get_last_output_dir()
             output_dir = filedialog.askdirectory(
-                title="Select Output Directory"
+                title="Select Output Directory",
+                initialdir=initial_dir
             )
             if not output_dir:  # User cancelled
                 return
+            
+            # Save the selected directory (parent level) for next time
+            self.pref_manager.set_last_output_dir(output_dir)
             
             # Create suffix based on Shot at ISO or Push/Pull
             suffix = ""
